@@ -1,0 +1,439 @@
+<title>EZUP Configurator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: input column beside a live result column; the quote sheet sits below as the document a customer receives. */
+:root {
+  --ground: #F1F0EC; --surface: #FFFFFF; --ink: #1C1E21; --ink-soft: #4A4E55; --rule: #D8D6CF;
+  --band: #1C1E21; --band-ink: #F1F0EC; --band-soft: #B9BCC2;
+  --yellow: #F2C200; --yellow-ink: #1C1E21; --warn-bg: #FFF4CC; --warn-ink: #6A4E00; --bad: #B3261E; --bad-bg: #FBE4E2; --ok: #1E6B3A; --ok-bg: #E2F2E7; --focus: #1F6FD1;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif; --body: "Barlow", "Segoe UI", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #141618; --surface: #1D2023; --ink: #ECEAE4; --ink-soft: #B3B6BC; --rule: #33373C;
+  --band: #0D0E10; --band-ink: #ECEAE4; --band-soft: #A6A9AF;
+  --warn-bg: #3A3010; --warn-ink: #F5D978; --bad: #F2A39C; --bad-bg: #3A1B19; --ok: #8FD6A6; --ok-bg: #16301F; --focus: #7FB2F0; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --ground: #141618; --surface: #1D2023; --ink: #ECEAE4; --ink-soft: #B3B6BC; --rule: #33373C;
+  --band: #0D0E10; --band-ink: #ECEAE4; --band-soft: #A6A9AF;
+  --warn-bg: #3A3010; --warn-ink: #F5D978; --bad: #F2A39C; --bad-bg: #3A1B19; --ok: #8FD6A6; --ok-bg: #16301F; --focus: #7FB2F0; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { background: var(--band); color: var(--band-ink); }
+header.top .wrap { padding-block: 20px; display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; margin: 0; line-height: 1.05; text-wrap: balance; }
+h1 { font-size: 2.2rem; } h2 { font-size: 1.6rem; } h3 { font-size: 1.25rem; }
+.tag { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--band-soft); }
+.proto { background: var(--yellow); color: var(--yellow-ink); font-family: var(--mono); font-size: 0.78rem; padding: 4px 8px; border-radius: 3px; letter-spacing: 0.06em; }
+main .wrap { padding-block: 28px 64px; display: flex; flex-direction: column; gap: 28px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 24px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; padding: 22px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 14px 16px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field label { font-weight: 600; font-size: 0.9rem; }
+.field input, .field select { font: inherit; padding: 10px; border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); border-radius: 3px; background: var(--ground); color: var(--ink); min-height: 44px; width: 100%; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.notice { border-radius: 4px; padding: 12px 14px; font-size: 0.95rem; display: flex; flex-direction: column; gap: 4px; }
+.notice.warn { background: var(--warn-bg); color: var(--warn-ink); }
+.notice.bad { background: var(--bad-bg); color: var(--bad); }
+.notice.ok { background: var(--ok-bg); color: var(--ok); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: 0.95rem; }
+.kv dt { color: var(--ink-soft); } .kv dd { margin: 0; font-weight: 600; }
+.price-big { font-family: var(--display); font-weight: 700; font-size: 2.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.table-box { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: middle; white-space: nowrap; }
+th { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); font-weight: 500; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); }
+td.wrapcell { white-space: normal; min-width: 180px; }
+tbody tr:last-child td { border-bottom: 0; }
+tfoot td { font-weight: 600; border-top: 2px solid var(--ink); border-bottom: 0; }
+.pill { display: inline-block; font-family: var(--mono); font-size: 0.72rem; padding: 2px 8px; border-radius: 99px; }
+.pill.ok { background: var(--ok-bg); color: var(--ok); } .pill.stale { background: var(--bad-bg); color: var(--bad); } .pill.soon { background: var(--warn-bg); color: var(--warn-ink); }
+.cost-input { width: 96px; font: inherit; font-family: var(--mono); text-align: right; padding: 6px; border: 1px solid var(--rule); border-radius: 3px; background: var(--ground); color: var(--ink); }
+.btn { font: 600 0.95rem var(--body); border-radius: 3px; min-height: 40px; padding: 8px 14px; cursor: pointer; border: 2px solid var(--ink); background: transparent; color: var(--ink); }
+.btn.primary { background: var(--yellow); color: var(--yellow-ink); border-color: var(--yellow); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.small { min-height: 34px; padding: 4px 10px; font-size: 0.85rem; border-width: 1px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+details summary { cursor: pointer; font-weight: 600; }
+/* quote sheet */
+.sheet { background: #FFFFFF; color: #15171A; border: 1px solid var(--rule); border-radius: 4px; padding: clamp(18px, 4vw, 40px); display: flex; flex-direction: column; gap: 18px; }
+.sheet .muted { color: #50545A; }
+.sheet table th { color: #50545A; } .sheet table td, .sheet table th { border-bottom-color: #DDDBD4; }
+.sheet tfoot td { border-top-color: #15171A; }
+.sheet-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; border-bottom: 3px solid #15171A; padding-bottom: 14px; }
+.sheet-head .who { font-family: var(--display); font-size: 1.8rem; font-weight: 700; }
+.sheet .clause { font-size: 0.85rem; border-left: 0; background: #F4F3EF; padding: 12px 14px; border-radius: 3px; }
+.sheet .draft { font-family: var(--mono); font-size: 0.7rem; color: #8A5A00; text-transform: uppercase; letter-spacing: 0.08em; }
+.blocked { position: relative; }
+.stamp { align-self: flex-start; font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 10px; border: 2px solid; border-radius: 3px; }
+.stamp.no { color: #B3261E; border-color: #B3261E; } .stamp.yes { color: #1E6B3A; border-color: #1E6B3A; }
+p { margin: 0; max-width: 70ch; }
+</style>
+
+<header class="top"><div class="wrap">
+<div class="row" style="gap:20px"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyMS4xLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAxNTk4IDUyNiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMTU5OCA1MjY7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+DQoJLnN0MHtmaWxsOiNFQ0VBRTQ7fQ0KCS5zdDF7ZW5hYmxlLWJhY2tncm91bmQ6bmV3ICAgIDt9DQoJLnN0MntmaWxsOiMxNTE3MUE7fQ0KCS5zdDN7ZmlsbDojRTM1MDUwO30NCjwvc3R5bGU+DQo8dGl0bGU+U2xpY2U8L3RpdGxlPg0KPGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+DQo8Zz4NCgk8cGF0aCBpZD0iUmVjdGFuZ2xlLTQiIGNsYXNzPSJzdDAiIGQ9Ik01MiwzODVoMTQ5NWMyNy42LDAsNTAsMjIuNCw1MCw1MHY0MWMwLDI3LjYtMjIuNCw1MC01MCw1MEg1MmMtMjcuNiwwLTUwLTIyLjQtNTAtNTB2LTQxDQoJCUMyLDQwNy40LDI0LjQsMzg1LDUyLDM4NXoiLz4NCgk8ZyBjbGFzcz0ic3QxIj4NCgkJPHBhdGggY2xhc3M9InN0MiIgZD0iTTE4NC44LDQ3NS41Yy03LjQsOS43LTE3LjEsMTQuNi0yOS4zLDE0LjZjLTEwLjEsMC0xOC44LTMuNi0yNi0xMC43Yy03LjEtNy4yLTEwLjctMTUuOS0xMC43LTI2DQoJCQlzMy42LTE4LjcsMTAuNy0yNS44YzcuMi03LjEsMTUuOS0xMC43LDI2LTEwLjdjMTIuMSwwLDIxLjksNC45LDI5LjMsMTQuNmwtMTAuNSwxMC41Yy00LjQtNy0xMC42LTEwLjUtMTguOC0xMC41DQoJCQljLTYuMSwwLTExLjMsMi4yLTE1LjYsNi41Yy00LjMsNC4yLTYuNSw5LjMtNi41LDE1LjRjMCw2LjEsMi4yLDExLjMsNi41LDE1LjZjNC4zLDQuNCw5LjUsNi42LDE1LjYsNi42YzguMiwwLDE0LjQtMy42LDE4LjgtMTAuNw0KCQkJTDE4NC44LDQ3NS41eiIvPg0KCQk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNMjk1LjYsNDQ2YzAsMTAuOS00LDE5LTEyLDI0LjFsNy4yLDE5LjloLTE1LjZsLTUuNS0xNWMtMS40LDAuMS0yLjUsMC4yLTMuMywwLjJoLTE0Ljh2MTQuOEgyMzd2LTczLjRoMjkuNA0KCQkJYzQuOSwwLDkuOCwxLjMsMTQuNiwzLjhDMjkwLjgsNDI1LjMsMjk1LjYsNDMzLjgsMjk1LjYsNDQ2eiBNMjY2LjQsNDYwLjdjMi40LDAsNC44LTAuNiw3LjMtMS44YzQuOS0yLjUsNy4zLTYuOCw3LjMtMTIuOQ0KCQkJYzAtNi4yLTIuNC0xMC40LTcuMy0xMi44Yy0yLjUtMS4zLTQuOS0yLTcuMy0yaC0xNC44djI5LjRIMjY2LjR6Ii8+DQoJCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik00MTYuOSw0OTAuMWgtMTcuMmwtNC4xLTEwLjNIMzY1bC00LjIsMTAuM2gtMTcuMmwzNi43LTczLjJMNDE2LjksNDkwLjF6IE0zODkuMyw0NjQuOGwtOC45LTE3LjhsLTguOSwxNy44DQoJCQlIMzg5LjN6Ii8+DQoJCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik00NjkuMSw0OTAuMXYtNzMuMmw0Mi41LDM5LjR2LTM5LjRoMTQuOHY3My4ybC00Mi43LTM5LjZ2MzkuNkg0NjkuMXoiLz4NCgkJPHBhdGggY2xhc3M9InN0MiIgZD0iTTYyOS45LDQxNi45djE0LjZoLTM2LjdWNDQ2SDYyNHYxNC42aC0zMC44djE0LjhoMzYuN3YxNC42aC01MS4zdi03My4ySDYyOS45eiIvPg0KCQk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNNzY4LjQsNDg1LjhjLTMuMy0xLjYtNS45LTMuMi03LjctNC45bDUuMS01LjNsNC45LTUuNWMxLDAuOSwyLjMsMS44LDQsMi41YzQuMiwyLDguOSwzLDE0LjIsMw0KCQkJYzguNSwwLDEzLjEtMi4zLDEzLjctN3YtMC4zYzAtMS4zLTAuNS0yLjYtMS40LTMuOGMtMi4yLTIuNS02LjMtMy44LTEyLjMtMy44Yy0xMC41LDAtMTguMi0yLjktMjMuMi04LjdjLTMuNC0zLjctNS4xLTgtNS4xLTEyLjkNCgkJCWMwLTAuOSwwLjEtMS44LDAuMi0yLjdjMC44LTUuOCwzLjctMTAuNSw4LjctMTQuMmM1LjEtMy42LDExLjYtNS4zLDE5LjQtNS4zYzcuNSwwLDE0LjQsMS40LDIwLjUsNC4zYzMuMywxLjYsNS45LDMuMyw3LjcsNQ0KCQkJbC0xMCwxMC43YzAtMC4zLTEuMy0xLjEtNC0yLjRjLTQuMi0yLTguOS0yLjktMTQuMi0yLjljLTguNSwwLTEzLDIuMi0xMy41LDYuN3YxYzAsMS4yLDAuNCwyLjIsMS4yLDMuMWMyLjIsMi41LDYuMywzLjgsMTIuMywzLjgNCgkJCWMxMC40LDAsMTguMiwyLjksMjMuNCw4LjdjMy4zLDMuOCw0LjksOC4xLDQuOSwxMi45YzAsMS0wLjEsMi0wLjIsMi45Yy0wLjYsNS44LTMuNSwxMC41LTguNywxNGMtNS4xLDMuNy0xMS42LDUuNS0xOS40LDUuNQ0KCQkJQzc4MS40LDQ5MC4xLDc3NC42LDQ4OC42LDc2OC40LDQ4NS44eiIvPg0KCQk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNOTM3LjksNDE2LjlsLTI5LjIsNTQuMXYxOS4xSDg5NHYtMTkuMWwtMjkuNC01NC4xSDg4M2wxOC4zLDM1LjFsMTguNC0zNS4xSDkzNy45eiIvPg0KCQk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNOTkxLjcsNDg1LjhjLTMuMy0xLjYtNS45LTMuMi03LjctNC45bDUuMS01LjNsNC45LTUuNWMxLDAuOSwyLjMsMS44LDQsMi41YzQuMiwyLDguOSwzLDE0LjIsMw0KCQkJYzguNSwwLDEzLjEtMi4zLDEzLjctN3YtMC4zYzAtMS4zLTAuNS0yLjYtMS40LTMuOGMtMi4yLTIuNS02LjMtMy44LTEyLjMtMy44Yy0xMC41LDAtMTguMi0yLjktMjMuMi04LjdjLTMuNC0zLjctNS4xLTgtNS4xLTEyLjkNCgkJCWMwLTAuOSwwLjEtMS44LDAuMi0yLjdjMC44LTUuOCwzLjctMTAuNSw4LjctMTQuMmM1LjEtMy42LDExLjYtNS4zLDE5LjQtNS4zYzcuNSwwLDE0LjQsMS40LDIwLjUsNC4zYzMuMywxLjYsNS45LDMuMyw3LjcsNQ0KCQkJbC0xMCwxMC43YzAtMC4zLTEuMy0xLjEtNC0yLjRjLTQuMi0yLTguOS0yLjktMTQuMi0yLjljLTguNSwwLTEzLDIuMi0xMy41LDYuN3YxYzAsMS4yLDAuNCwyLjIsMS4yLDMuMWMyLjIsMi41LDYuMywzLjgsMTIuMywzLjgNCgkJCWMxMC40LDAsMTguMiwyLjksMjMuNCw4LjdjMy4zLDMuOCw0LjksOC4xLDQuOSwxMi45YzAsMS0wLjEsMi0wLjIsMi45Yy0wLjYsNS44LTMuNSwxMC41LTguNywxNGMtNS4xLDMuNy0xMS42LDUuNS0xOS40LDUuNQ0KCQkJQzEwMDQuNyw0OTAuMSw5OTcuOCw0ODguNiw5OTEuNyw0ODUuOHoiLz4NCgkJPHBhdGggY2xhc3M9InN0MiIgZD0iTTExNTAuNSw0MTYuOXYxNC42aC0yMS45djU4LjdoLTE0Ljh2LTU4LjdIMTA5MnYtMTQuNkgxMTUwLjV6Ii8+DQoJCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik0xMjU0LDQxNi45djE0LjZoLTM2LjdWNDQ2aDMwLjh2MTQuNmgtMzAuOHYxNC44aDM2Ljd2MTQuNmgtNTEuM3YtNzMuMkgxMjU0eiIvPg0KCQk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNMTM0MCw0NjUuMmwzMy44LTQ4LjN2NzMuMmgtMTQuOHYtMjcuOGwtMTguOSwyNy44bC0xOS4xLTI3Ljh2MjcuOGgtMTQuNnYtNzMuMkwxMzQwLDQ2NS4yeiIvPg0KCTwvZz4NCgk8ZyBjbGFzcz0ic3QxIj4NCgkJPHBhdGggY2xhc3M9InN0MiIgZD0iTTE0MzQuNCw0ODUuOGMtMy4zLTEuNi01LjktMy4yLTcuNy00LjlsNS4xLTUuM2w0LjktNS41YzEsMC45LDIuMywxLjgsNCwyLjVjNC4yLDIsOC45LDMsMTQuMiwzDQoJCQljOC41LDAsMTMuMS0yLjMsMTMuNy03di0wLjNjMC0xLjMtMC41LTIuNi0xLjQtMy44Yy0yLjItMi41LTYuMy0zLjgtMTIuMy0zLjhjLTEwLjUsMC0xOC4yLTIuOS0yMy4yLTguN2MtMy40LTMuNy01LjEtOC01LjEtMTIuOQ0KCQkJYzAtMC45LDAuMS0xLjgsMC4yLTIuN2MwLjgtNS44LDMuNy0xMC41LDguNy0xNC4yYzUuMS0zLjYsMTEuNi01LjMsMTkuNC01LjNjNy41LDAsMTQuNCwxLjQsMjAuNSw0LjNjMy4zLDEuNiw1LjksMy4zLDcuNyw1DQoJCQlsLTEwLDEwLjdjMC0wLjMtMS4zLTEuMS00LTIuNGMtNC4yLTItOC45LTIuOS0xNC4yLTIuOWMtOC41LDAtMTMsMi4yLTEzLjUsNi43djFjMCwxLjIsMC40LDIuMiwxLjIsMy4xYzIuMiwyLjUsNi4zLDMuOCwxMi4zLDMuOA0KCQkJYzEwLjQsMCwxOC4yLDIuOSwyMy40LDguN2MzLjMsMy44LDQuOSw4LjEsNC45LDEyLjljMCwxLTAuMSwyLTAuMiwyLjljLTAuNiw1LjgtMy41LDEwLjUtOC43LDE0Yy01LjEsMy43LTExLjYsNS41LTE5LjQsNS41DQoJCQlDMTQ0Ny4zLDQ5MC4xLDE0NDAuNSw0ODguNiwxNDM0LjQsNDg1Ljh6Ii8+DQoJPC9nPg0KCTxwYXRoIGlkPSJDb21iaW5lZC1TaGFwZSIgY2xhc3M9InN0MCIgZD0iTTExNzMsNzkuOWgxMDYuOUwxMTU0LjgsMEwxMDI5LDc5LjloMTAzVjM0OEg4MTYuOUg3NjJsMCwwYy0yNy42LDAtNTAtMjIuNC01MC01MHYtMjkNCgkJbDAsNzlINTBjLTI3LjYsMC01MC0yMi40LTUwLTUwVjUwbDAsMEMwLDIyLjQsMjIuNCwwLDUwLDBsMCwwaDc2N3YyNDRjMCwxMy44LDExLjIsMjUsMjUsMjVoMTg3VjBoNTE2bDAsMGMyNy42LDAsNTAsMjIuNCw1MCw1MA0KCQl2MTY5YzAsMjcuNi0yMi40LDUwLTUwLDUwaC0yNjZ2NzloLTEwNlY3OS45eiBNOTkuNyw3OS44bDAuMiw2MC42aDE1Ny44djY5LjVIOTkuNXY1OC40aDI1OC42TDU3NC40LDgwTDk5LjcsNzkuOHogTTcxMi43LDI2OC40DQoJCUw3MTIsODBMNDk0LjgsMjY5TDcxMi43LDI2OC40eiBNMTI4MCw4MHYxMTNoMTkyYzExLDAsMjAtOSwyMC0yMHYtNzNjMC0xMS05LTIwLTIwLTIwSDEyODB6Ii8+DQoJPHBhdGggaWQ9IkNvbWJpbmVkLVNoYXBlXzFfIiBjbGFzcz0ic3QzIiBkPSJNMzczLDI5NS40VjI3OUw2MTguNiw2NEgzNzNWMTZoMzI0djM1LjJWNzBMNDUxLjQsMjg0SDY5N3Y0OEgzNzNWMjk1LjR6Ii8+DQo8L2c+DQo8L3N2Zz4NCg==" alt="EZUP Crane Systems" width="152" height="50" style="height:50px;width:auto"><div><span class="tag">Sales tool</span><h1>Configure · Price · Quote</h1></div></div>
+<span class="proto">Prototype · sample costs</span>
+</div></header>
+
+<main><div class="wrap">
+
+<div class="cols">
+<section class="panel" aria-labelledby="in-h">
+<h2 id="in-h">The system</h2>
+<div class="fields">
+<div class="field"><label for="cap">Capacity</label><select id="cap"><option value="0.5">1/2 ton (1,000 lb)</option><option value="1">1 ton (2,000 lb)</option><option value="2">2 ton (4,000 lb)</option><option value="3" selected>3 ton (6,000 lb)</option></select></div>
+<div class="field"><label for="power">Power</label><select id="power"><option value="480">480 V 3-phase</option><option value="230">230 V 3-phase</option><option value="120">120 V single phase</option></select></div>
+<div class="field"><label for="op">Operation</label><select id="op"><option value="radio">Motorized, radio</option><option value="pendant">Motorized, pendant</option><option value="manual">Manual push-pull</option></select></div>
+<div class="field"><label for="span">Bridge span (ft)</label><input id="span" type="number" min="8" max="60" step="1" value="30" inputmode="decimal"></div>
+<div class="field"><label for="runway">Runway length (ft)</label><input id="runway" type="number" min="10" max="300" step="1" value="60" inputmode="decimal"></div>
+<div class="field"><label for="height">Height under runway (ft)</label><input id="height" type="number" min="8" max="30" step="0.5" value="16" inputmode="decimal"></div>
+<div class="field"><label for="support">Runway support</label><select id="support"><option value="free">Free-standing columns</option><option value="building">Hung from building steel</option></select></div>
+<div class="field"><label for="install">Installation</label><select id="install"><option value="ezup">EZUP installs</option><option value="customer">Customer installs</option></select></div>
+<div class="field"><label for="miles">Miles to site</label><input id="miles" type="number" min="0" max="3000" step="10" value="150" inputmode="numeric"></div>
+<div class="field"><label for="margin">Margin (%)</label><input id="margin" type="number" min="20" max="60" step="1" value="27" inputmode="decimal"></div>
+</div>
+<div id="rule-notes" class="notice warn" hidden></div>
+</section>
+
+<section class="panel" aria-labelledby="out-h">
+<h2 id="out-h">Recommendation</h2>
+<dl class="kv" id="rec"></dl>
+<div>
+<span class="eyebrow">Selling price</span>
+<div class="price-big" id="price">$0</div>
+<p class="muted" id="price-sub" style="color: var(--ink-soft); font-size: 0.9rem"></p>
+</div>
+<div id="stale-box" class="notice" role="status"></div>
+<details>
+<summary>Preliminary girder check</summary>
+<div style="padding-top: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 0.92rem" id="check"></div>
+</details>
+</section>
+</div>
+
+<section class="panel" aria-labelledby="bom-h">
+<div class="row" style="justify-content: space-between"><h2 id="bom-h">Bill of materials and cost</h2><span class="eyebrow">Internal view · not shown to customers</span></div>
+<div class="table-box"><table>
+<thead><tr><th>Item</th><th>Category</th><th class="n">Qty</th><th>Unit</th><th class="n">Unit cost</th><th class="n">Extended</th><th>Price age</th></tr></thead>
+<tbody id="bom"></tbody>
+<tfoot id="bom-foot"></tfoot>
+</table></div>
+</section>
+
+<section class="panel" aria-labelledby="pt-h">
+<div class="row" style="justify-content: space-between">
+<h2 id="pt-h">Price table</h2>
+<div class="row"><button class="btn small" id="reset-prices" type="button">Restore sample prices</button></div>
+</div>
+<p style="color: var(--ink-soft)">Every cost carries the date it was last checked and how long it stays good. A firm quote can't be issued while any cost it uses is out of date. Change a cost or press Verified to mark it checked today. Edits are kept in this browser only.</p>
+<div class="table-box"><table>
+<thead><tr><th>Item</th><th>Category</th><th class="n">Cost</th><th>Unit</th><th>Last verified</th><th class="n">Max age</th><th>Status</th><th></th></tr></thead>
+<tbody id="prices"></tbody>
+</table></div>
+</section>
+
+<section aria-labelledby="q-h" style="display: flex; flex-direction: column; gap: 12px">
+<div class="row" style="justify-content: space-between"><h2 id="q-h">Customer quote</h2><span class="eyebrow">What the customer receives</span></div>
+<article class="sheet" id="sheet"></article>
+</section>
+
+</div></main>
+
+<script>
+// ================= CONFIGURATION (move to the database at launch) =================
+const RULES = {
+  quoteValidDays: 15,             // matches how long supplier costs hold
+  escalationPct: 10,
+  targetMargin: 0.27,            // default gross margin (2025 business plan)
+  minMargin: 0.20,               // floor on every product, cannot be overridden
+  impact: 0.15,                  // hoist impact allowance on lifted load
+  deflLimit: 600,                // span / x for live load deflection (preliminary)
+  maxColumnSpacing: 20,          // ft, free-standing runway (PLACEHOLDER)
+  professionalMaxTons: 1,
+  E: 29000000, Fy: 50000
+};
+
+// Girder selection by capacity and span band. PLACEHOLDER: replace with output
+// from the Crane Bridge Girder Designer. Properties are AISC W-shape values.
+const SHAPES = {
+  "W8x18": { w: 18, Ix: 61.9, Sx: 15.2 }, "W10x22": { w: 22, Ix: 118, Sx: 23.2 }, "W10x33": { w: 33, Ix: 171, Sx: 35.0 },
+  "W12x26": { w: 26, Ix: 204, Sx: 33.4 }, "W12x35": { w: 35, Ix: 285, Sx: 45.6 }, "W14x30": { w: 30, Ix: 291, Sx: 42.0 },
+  "W14x38": { w: 38, Ix: 385, Sx: 54.6 }, "W16x31": { w: 31, Ix: 375, Sx: 47.2 }, "W16x40": { w: 40, Ix: 518, Sx: 64.7 },
+  "W18x46": { w: 46, Ix: 712, Sx: 78.8 }, "W21x50": { w: 50, Ix: 984, Sx: 94.5 }, "W24x55": { w: 55, Ix: 1350, Sx: 114 }
+};
+const SPAN_BANDS = [20, 30, 40, 50, 60];
+const GIRDERS = {
+  "0.5": ["W8x18", "W10x22", "W12x26", "W14x30", "W16x31"],
+  "1":   ["W10x22", "W12x26", "W14x30", "W16x40", "W18x46"],
+  "2":   ["W10x33", "W12x35", "W16x40", "W18x46", "W21x50"],
+  "3":   ["W12x35", "W14x38", "W18x46", "W21x50", "W24x55"]
+};
+const RUNWAY_BEAM = { "0.5": "W8x18", "1": "W10x22", "2": "W12x26", "3": "W12x35" }; // at 20 ft column spacing, PLACEHOLDER
+const HOIST = {   // Demag model by line and capacity; weights approximate, PLACEHOLDER
+  industrial:   { "0.5": ["DC-Pro 1/2 t", 90], "1": ["DC-Pro 1 t", 110], "2": ["DC-Pro 2 t", 150], "3": ["DC-Pro 3 t", 230] },
+  professional: { "0.5": ["DC-Com 1/2 t", 70], "1": ["DC-Com 1 t", 90] }
+};
+
+// Sample price table. Every value here is a SAMPLE for the prototype.
+const SAMPLE_PRICES = [
+  { id: "steel_w",     name: "Structural steel, W-shapes",     cat: "Steel",       cost: 1.10, unit: "lb",   verified: "2026-10-27", maxAge: 15 },
+  { id: "steel_hss",   name: "Structural steel, HSS columns",  cat: "Steel",       cost: 1.25, unit: "lb",   verified: "2026-10-27", maxAge: 15 },
+  { id: "plate",       name: "Plate and base plates",          cat: "Steel",       cost: 1.05, unit: "lb",   verified: "2026-10-27", maxAge: 15 },
+  { id: "endtruck_m",  name: "EZUP end truck pair, motorized", cat: "Components",  cost: 4200, unit: "pair", verified: "2026-10-27", maxAge: 15 },
+  { id: "endtruck_p",  name: "EZUP end truck pair, push",      cat: "Components",  cost: 2300, unit: "pair", verified: "2026-10-27", maxAge: 15 },
+  { id: "trolley_m",   name: "EZUP trolley, motorized",        cat: "Components",  cost: 2600, unit: "ea",   verified: "2026-10-27", maxAge: 15 },
+  { id: "trolley_p",   name: "EZUP trolley, push",             cat: "Components",  cost: 1200, unit: "ea",   verified: "2026-10-27", maxAge: 15 },
+  { id: "panel_vfd",   name: "Control panel with VFDs",        cat: "Electrical",  cost: 3800, unit: "ea",   verified: "2026-10-27", maxAge: 15 },
+  { id: "radio",       name: "Radio control, 2 transmitters",  cat: "Electrical",  cost: 1900, unit: "set",  verified: "2026-10-27", maxAge: 15 },
+  { id: "pendant",     name: "Pendant station",                cat: "Electrical",  cost: 450,  unit: "ea",   verified: "2026-10-27", maxAge: 15 },
+  { id: "conductor",   name: "Conductor bar, installed length",cat: "Electrical",  cost: 28,   unit: "ft",   verified: "2026-10-10", maxAge: 15 },
+  { id: "hoist_pro",   name: "Demag DC-Pro hoist (avg)",       cat: "Hoist",       cost: 6500, unit: "ea",   verified: "2026-10-27", maxAge: 15 },
+  { id: "hoist_com",   name: "Demag DC-Com hoist (avg)",       cat: "Hoist",       cost: 3600, unit: "ea",   verified: "2026-10-27", maxAge: 15 },
+  { id: "hanger",      name: "Runway hanger assembly",         cat: "Components",  cost: 340,  unit: "ea",   verified: "2026-10-27", maxAge: 15 },
+  { id: "fab",         name: "Fabrication labor",              cat: "Labor",       cost: 75,   unit: "hr",   verified: "2026-10-27", maxAge: 15 },
+  { id: "install",     name: "Installation labor",             cat: "Labor",       cost: 85,   unit: "hr",   verified: "2026-10-27", maxAge: 15 },
+  { id: "eng",         name: "Engineering and drawings",       cat: "Engineering", cost: 1800, unit: "job",  verified: "2026-10-27", maxAge: 15 },
+  { id: "freight",     name: "Freight",                        cat: "Freight",     cost: 4.25, unit: "mile", verified: "2026-10-27", maxAge: 15 },
+  { id: "paint",       name: "Paint and consumables",          cat: "Steel",       cost: 0.12, unit: "lb steel", verified: "2026-10-27", maxAge: 15 }
+];
+const ESCALATION_CATS = ["Steel", "Components", "Electrical", "Hoist"];
+
+// ================= STATE =================
+const STORE_KEY = "ezup-cpq-prices-v2";
+let prices = loadPrices();
+function loadPrices() {
+  try { const s = localStorage.getItem(STORE_KEY); if (s) return JSON.parse(s); } catch (e) {}
+  return JSON.parse(JSON.stringify(SAMPLE_PRICES));
+}
+function savePrices() { try { localStorage.setItem(STORE_KEY, JSON.stringify(prices)); } catch (e) {} }
+const P = id => prices.find(p => p.id === id);
+
+// ================= DATES =================
+const today = new Date(); today.setHours(0, 0, 0, 0);
+const iso = d => d.toISOString().slice(0, 10);
+const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const ageDays = s => Math.round((today - parse(s)) / 86400000);
+const fmtDate = d => d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+function priceStatus(p) {
+  const left = p.maxAge - ageDays(p.verified);
+  if (left < 0) return { cls: "stale", label: "Out of date", left };
+  if (left <= 3) return { cls: "soon", label: `Due in ${left} d`, left };
+  return { cls: "ok", label: "Current", left };
+}
+
+// ================= CONFIGURE =================
+function configure(inp) {
+  const notes = [];
+  let cap = inp.cap;
+  const line = (inp.power === "120") ? "professional" : "industrial";
+  if (line === "professional" && cap > RULES.professionalMaxTons) {
+    notes.push(`120 V single phase covers the Professional line up to ${RULES.professionalMaxTons} ton. ${cap} ton needs 3-phase power, so this was quoted as Industrial on 230 V. Confirm power with the customer.`);
+  }
+  const effLine = (line === "professional" && cap <= RULES.professionalMaxTons) ? "professional" : "industrial";
+  const span = Math.min(Math.max(inp.span, 8), 60);
+  if (inp.span > 60) notes.push("Spans over 60 ft are outside the EZUP range. Quoted at 60 ft; engineer a custom bridge.");
+  const band = SPAN_BANDS.findIndex(b => span <= b);
+  const girder = GIRDERS[String(cap)][band];
+  const g = SHAPES[girder];
+  const [hoistModel, hoistWt] = HOIST[effLine][String(cap)];
+  const motorized = inp.op !== "manual";
+  if (!motorized && cap > 1) notes.push("Push-pull travel above 1 ton is hard on operators. Consider motorized travel.");
+
+  // Runway
+  const bays = Math.max(1, Math.ceil(inp.runway / RULES.maxColumnSpacing));
+  const colsPerSide = bays + 1;
+  const runwayBeam = RUNWAY_BEAM[String(cap)];
+  const free = inp.support === "free";
+  if (!free) notes.push("Hung from building steel: the building structure must be checked by our PE before a firm price.");
+
+  // Weights (lb)
+  const bridgeSteel = 2 * span * g.w;                       // double girder
+  const runwaySteel = 2 * inp.runway * SHAPES[runwayBeam].w;
+  const colSteel = free ? 2 * colsPerSide * inp.height * 19.02 : 0;   // HSS6x6x1/4
+  const plateSteel = free ? 2 * colsPerSide * 60 : 0;        // base plate, cap and stiffeners, PLACEHOLDER
+  const steelTotal = bridgeSteel + runwaySteel + colSteel + plateSteel;
+
+  // Preliminary girder check: wheel loads on two girders, simple span
+  const liftLb = cap * 2000;
+  const trolleyWt = motorized ? 350 : 200;
+  const Pg = ((liftLb + hoistWt) * (1 + RULES.impact) + trolleyWt) / 2;
+  const L = span * 12, w = g.w / 12;
+  const M = Pg * L / 4 + w * L * L / 8;
+  const fb = M / g.Sx;
+  const defl = Pg * Math.pow(L, 3) / (48 * RULES.E * g.Ix);
+  const ratio = L / defl;
+
+  // Bill of materials
+  const bom = [];
+  const add = (id, label, qty, unitOverride) => { const p = P(id); bom.push({ id, label: label || p.name, cat: p.cat, qty, unit: unitOverride || p.unit, cost: p.cost, ext: qty * p.cost }); };
+  add("steel_w", `Bridge girders, 2 × ${girder} × ${span} ft`, Math.round(bridgeSteel));
+  add("steel_w", `Runway beams, 2 × ${runwayBeam} × ${inp.runway} ft`, Math.round(runwaySteel));
+  if (free) { add("steel_hss", `Columns, ${2 * colsPerSide} × HSS6x6x1/4 × ${inp.height} ft`, Math.round(colSteel)); add("plate", `Base plates and caps, ${2 * colsPerSide} sets`, Math.round(plateSteel)); }
+  else add("hanger", `Runway hangers at ${RULES.maxColumnSpacing} ft`, 2 * colsPerSide);
+  add("paint", "Paint and consumables", Math.round(steelTotal));
+  add(motorized ? "endtruck_m" : "endtruck_p", null, 1);
+  add(motorized ? "trolley_m" : "trolley_p", null, 1);
+  add(effLine === "industrial" ? "hoist_pro" : "hoist_com", `Demag ${hoistModel} hoist`, 1);
+  if (motorized) {
+    add("panel_vfd", null, 1);
+    add(inp.op === "radio" ? "radio" : "pendant", null, 1);
+    add("conductor", "Conductor bar, runway and bridge", Math.round(inp.runway + span));
+  }
+  const fabHrs = Math.round(steelTotal / 1000 * 6 + 12);   // PLACEHOLDER: 6 hr per 1,000 lb plus assembly
+  add("fab", `Fabrication and assembly (${fabHrs} hr)`, fabHrs);
+  if (inp.install === "ezup") { const instHrs = Math.round(24 + inp.runway * 0.6 + (free ? colsPerSide * 4 : colsPerSide * 3)); add("install", `Installation crew (${instHrs} hr)`, instHrs); }
+  add("eng", "Engineering, drawings and load test", 1);
+  add("freight", "Freight to site", Math.max(50, inp.miles));
+
+  const cost = bom.reduce((s, r) => s + r.ext, 0);
+  let margin = Number.isFinite(inp.margin) && inp.margin > 0 ? inp.margin / 100 : RULES.targetMargin;
+  if (margin < RULES.minMargin) { notes.push(`Margin can't go below ${RULES.minMargin * 100}%. Priced at ${RULES.minMargin * 100}%.`); margin = RULES.minMargin; }
+  if (margin > 0.6) margin = 0.6;
+  const sell = Math.ceil(cost / (1 - margin) / 50) * 50;
+  const usedIds = [...new Set(bom.map(r => r.id))];
+  const stale = usedIds.map(P).filter(p => priceStatus(p).cls === "stale");
+  const soon = usedIds.map(P).filter(p => priceStatus(p).cls === "soon");
+  const validDays = Math.min(RULES.quoteValidDays, ...usedIds.map(P).map(p => Math.max(0, priceStatus(p).left)));
+
+  return { inp, margin, validDays, effLine, span, girder, runwayBeam, hoistModel, motorized, free, colsPerSide, steelTotal, bom, cost, sell, stale, soon, notes, check: { Pg, fb, defl, ratio, girder } };
+}
+
+// ================= RENDER =================
+const $ = id => document.getElementById(id);
+const money = n => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const money2 = n => n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const num = n => n.toLocaleString("en-US");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function readInputs() {
+  return { cap: Number($("cap").value), power: $("power").value, op: $("op").value, span: Number($("span").value) || 30,
+    runway: Number($("runway").value) || 40, height: Number($("height").value) || 14, support: $("support").value,
+    install: $("install").value, miles: Number($("miles").value) || 0, margin: Number($("margin").value) };
+}
+
+function render() {
+  const r = configure(readInputs());
+  const lineName = r.effLine === "industrial" ? "EZUP Industrial" : "EZUP Professional";
+  const capLabel = $("cap").selectedOptions[0].textContent;
+
+  $("rec").innerHTML = [
+    ["System", `${lineName}, double girder, top running`],
+    ["Capacity", capLabel],
+    ["Bridge", `2 × ${r.girder} × ${r.span} ft`],
+    ["Runway", `2 × ${r.runwayBeam} × ${r.inp.runway} ft`],
+    ["Support", r.free ? `${2 * r.colsPerSide} free-standing columns` : `${2 * r.colsPerSide} hangers to building steel`],
+    ["Hoist", `Demag ${r.hoistModel}`],
+    ["Travel", r.motorized ? (r.inp.op === "radio" ? "Motorized, VFD, radio control" : "Motorized, VFD, pendant") : "Push-pull"],
+    ["Steel", `${num(Math.round(r.steelTotal))} lb`]
+  ].map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("");
+
+  $("price").textContent = money(r.sell);
+  $("price-sub").textContent = `Cost ${money(r.cost)} · ${Math.round(r.margin * 100)}% margin (minimum ${RULES.minMargin * 100}%) · rounded to $50`;
+
+  const box = $("stale-box");
+  if (r.stale.length) {
+    box.className = "notice bad";
+    box.innerHTML = `<strong>Firm quote blocked.</strong><span>${r.stale.length} cost${r.stale.length > 1 ? "s are" : " is"} out of date: ${r.stale.map(p => esc(p.name)).join("; ")}. Update ${r.stale.length > 1 ? "them" : "it"} in the price table, or send this as a budget figure only.</span>`;
+  } else if (r.soon.length) {
+    box.className = "notice warn";
+    box.innerHTML = `<strong>Ready to quote.</strong><span>Due for review within a week: ${r.soon.map(p => esc(p.name)).join("; ")}.</span>`;
+  } else if (r.validDays < 10) {
+    box.className = "notice warn";
+    box.innerHTML = `<strong>Ready to quote, but short validity.</strong><span>The oldest cost expires in ${r.validDays} days, so this quote is only good for ${r.validDays} days. Re-verify costs to give the customer the full ${RULES.quoteValidDays} days.</span>`;
+  } else {
+    box.className = "notice ok";
+    box.innerHTML = `<strong>Ready to quote.</strong><span>Every cost used is current.</span>`;
+  }
+
+  const notesEl = $("rule-notes");
+  notesEl.hidden = !r.notes.length;
+  notesEl.innerHTML = r.notes.map(n => `<span>${esc(n)}</span>`).join("");
+
+  const c = r.check;
+  const okDefl = c.ratio >= RULES.deflLimit;
+  $("check").innerHTML = `
+    <span>Wheel load per girder: <strong>${num(Math.round(c.Pg))} lb</strong> (lifted load and hoist × ${1 + RULES.impact}, plus trolley, split to two girders)</span>
+    <span>Bending stress at midspan: <strong>${num(Math.round(c.fb))} psi</strong></span>
+    <span>Live load deflection: <strong>${c.defl.toFixed(2)} in, L/${Math.round(c.ratio)}</strong> <span class="pill ${okDefl ? "ok" : "stale"}">${okDefl ? "within" : "exceeds"} L/${RULES.deflLimit}</span></span>
+    <span style="color: var(--ink-soft)">Lateral-torsional buckling, local, fatigue and end-truck checks are not run here. The girder table is a placeholder until it is tied to the Girder Designer. Final design by PE.</span>`;
+
+  // BOM
+  $("bom").innerHTML = r.bom.map(row => {
+    const st = priceStatus(P(row.id));
+    return `<tr><td class="wrapcell">${esc(row.label)}</td><td>${row.cat}</td><td class="n">${num(row.qty)}</td><td>${row.unit}</td><td class="n">${row.cost < 10 ? money2(row.cost) : money(row.cost)}</td><td class="n">${money(row.ext)}</td><td><span class="pill ${st.cls}">${st.label}</span></td></tr>`;
+  }).join("");
+  $("bom-foot").innerHTML = `<tr><td colspan="5">Total cost</td><td class="n">${money(r.cost)}</td><td></td></tr><tr><td colspan="5">Selling price at ${Math.round(r.margin * 100)}% margin</td><td class="n">${money(r.sell)}</td><td></td></tr>`;
+
+  renderPrices(r);
+  renderSheet(r, lineName, capLabel);
+}
+
+function renderPrices(r) {
+  const used = new Set(r.bom.map(b => b.id));
+  $("prices").innerHTML = prices.map(p => {
+    const st = priceStatus(p);
+    return `<tr><td>${esc(p.name)}${used.has(p.id) ? "" : ' <span style="color:var(--ink-soft);font-size:.8rem">(not in this quote)</span>'}</td><td>${p.cat}</td>
+      <td class="n"><input class="cost-input" type="number" step="0.01" min="0" value="${p.cost}" data-id="${p.id}" aria-label="Cost for ${esc(p.name)}"></td>
+      <td>${p.unit}</td><td>${p.verified} <span style="color:var(--ink-soft)">(${ageDays(p.verified)} d)</span></td><td class="n">${p.maxAge} d</td>
+      <td><span class="pill ${st.cls}">${st.label}</span></td>
+      <td><button class="btn small" type="button" data-verify="${p.id}">Verified</button></td></tr>`;
+  }).join("");
+}
+
+function renderSheet(r, lineName, capLabel) {
+  const quoteNo = "Q-" + iso(today).replace(/-/g, "").slice(2) + "-" + String(Math.round(r.sell) % 997).padStart(3, "0");
+  // A quote can never outlast the costs behind it: valid through the earlier of
+  // 15 days from today or the first expiry among the costs this quote uses.
+  const valid = new Date(today); valid.setDate(valid.getDate() + RULES.quoteValidDays);
+  [...new Set(r.bom.map(b => b.id))].map(P).forEach(p => { const exp = parse(p.verified); exp.setDate(exp.getDate() + p.maxAge); if (exp >= today && exp < valid) valid.setTime(exp.getTime()); });
+  const validDays = Math.round((valid - today) / 86400000);
+  const firm = r.stale.length === 0;
+  const scope = [
+    `${lineName} top-running double-girder workstation crane, ${capLabel} capacity`,
+    `Bridge span ${r.span} ft, girders 2 × ${r.girder}`,
+    `Runway ${r.inp.runway} ft, beams 2 × ${r.runwayBeam}, ${r.free ? `${2 * r.colsPerSide} free-standing columns, ${r.inp.height} ft under runway` : "hung from existing building steel (subject to structural review)"}`,
+    `Demag ${r.hoistModel} electric chain hoist`,
+    r.motorized ? `Motorized bridge and trolley travel with variable frequency drives, ${r.inp.op === "radio" ? "industrial radio control with two transmitters" : "pendant control"}` : "Push-pull bridge and trolley travel",
+    r.motorized ? "Conductor bar power feed on runway and bridge" : null,
+    "Engineering, stamped drawings and load test certificate",
+    r.inp.install === "ezup" ? "Delivery and installation by EZUP" : `Delivery to site (${num(r.inp.miles)} mi); installation by others`
+  ].filter(Boolean);
+
+  $("sheet").innerHTML = `
+    <div class="sheet-head">
+      <div><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyMS4xLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAxNTk4IDUyNiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMTU5OCA1MjY7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+DQoJLnN0MHtmaWxsOiMyMDIwMjA7fQ0KCS5zdDF7ZW5hYmxlLWJhY2tncm91bmQ6bmV3ICAgIDt9DQoJLnN0MntmaWxsOiNGRkZGRkY7fQ0KCS5zdDN7ZmlsbDojRTM1MDUwO30NCjwvc3R5bGU+DQo8dGl0bGU+U2xpY2U8L3RpdGxlPg0KPGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaC48L2Rlc2M+DQo8Zz4NCgk8cGF0aCBpZD0iUmVjdGFuZ2xlLTQiIGNsYXNzPSJzdDAiIGQ9Ik01MiwzODVoMTQ5NWMyNy42LDAsNTAsMjIuNCw1MCw1MHY0MWMwLDI3LjYtMjIuNCw1MC01MCw1MEg1MmMtMjcuNiwwLTUwLTIyLjQtNTAtNTB2LTQxDQoJCUMyLDQwNy40LDI0LjQsMzg1LDUyLDM4NXoiLz4NCgk8ZyBjbGFzcz0ic3QxIj4NCgkJPHBhdGggY2xhc3M9InN0MiIgZD0iTTE4NC44LDQ3NS41Yy03LjQsOS43LTE3LjEsMTQuNi0yOS4zLDE0LjZjLTEwLjEsMC0xOC44LTMuNi0yNi0xMC43Yy03LjEtNy4yLTEwLjctMTUuOS0xMC43LTI2DQoJCQlzMy42LTE4LjcsMTAuNy0yNS44YzcuMi03LjEsMTUuOS0xMC43LDI2LTEwLjdjMTIuMSwwLDIxLjksNC45LDI5LjMsMTQuNmwtMTAuNSwxMC41Yy00LjQtNy0xMC42LTEwLjUtMTguOC0xMC41DQoJCQljLTYuMSwwLTExLjMsMi4yLTE1LjYsNi41Yy00LjMsNC4yLTYuNSw5LjMtNi41LDE1LjRjMCw2LjEsMi4yLDExLjMsNi41LDE1LjZjNC4zLDQuNCw5LjUsNi42LDE1LjYsNi42YzguMiwwLDE0LjQtMy42LDE4LjgtMTAuNw0KCQkJTDE4NC44LDQ3NS41eiIvPg0KCQk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNMjk1LjYsNDQ2YzAsMTAuOS00LDE5LTEyLDI0LjFsNy4yLDE5LjloLTE1LjZsLTUuNS0xNWMtMS40LDAuMS0yLjUsMC4yLTMuMywwLjJoLTE0Ljh2MTQuOEgyMzd2LTczLjRoMjkuNA0KCQkJYzQuOSwwLDkuOCwxLjMsMTQuNiwzLjhDMjkwLjgsNDI1LjMsMjk1LjYsNDMzLjgsMjk1LjYsNDQ2eiBNMjY2LjQsNDYwLjdjMi40LDAsNC44LTAuNiw3LjMtMS44YzQuOS0yLjUsNy4zLTYuOCw3LjMtMTIuOQ0KCQkJYzAtNi4yLTIuNC0xMC40LTcuMy0xMi44Yy0yLjUtMS4zLTQuOS0yLTcuMy0yaC0xNC44djI5LjRIMjY2LjR6Ii8+DQoJCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik00MTYuOSw0OTAuMWgtMTcuMmwtNC4xLTEwLjNIMzY1bC00LjIsMTAuM2gtMTcuMmwzNi43LTczLjJMNDE2LjksNDkwLjF6IE0zODkuMyw0NjQuOGwtOC45LTE3LjhsLTguOSwxNy44DQoJCQlIMzg5LjN6Ii8+DQoJCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik00NjkuMSw0OTAuMXYtNzMuMmw0Mi41LDM5LjR2LTM5LjRoMTQuOHY3My4ybC00Mi43LTM5LjZ2MzkuNkg0NjkuMXoiLz4NCgkJPHBhdGggY2xhc3M9InN0MiIgZD0iTTYyOS45LDQxNi45djE0LjZoLTM2LjdWNDQ2SDYyNHYxNC42aC0zMC44djE0LjhoMzYuN3YxNC42aC01MS4zdi03My4ySDYyOS45eiIvPg0KCQk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNNzY4LjQsNDg1LjhjLTMuMy0xLjYtNS45LTMuMi03LjctNC45bDUuMS01LjNsNC45LTUuNWMxLDAuOSwyLjMsMS44LDQsMi41YzQuMiwyLDguOSwzLDE0LjIsMw0KCQkJYzguNSwwLDEzLjEtMi4zLDEzLjctN3YtMC4zYzAtMS4zLTAuNS0yLjYtMS40LTMuOGMtMi4yLTIuNS02LjMtMy44LTEyLjMtMy44Yy0xMC41LDAtMTguMi0yLjktMjMuMi04LjdjLTMuNC0zLjctNS4xLTgtNS4xLTEyLjkNCgkJCWMwLTAuOSwwLjEtMS44LDAuMi0yLjdjMC44LTUuOCwzLjctMTAuNSw4LjctMTQuMmM1LjEtMy42LDExLjYtNS4zLDE5LjQtNS4zYzcuNSwwLDE0LjQsMS40LDIwLjUsNC4zYzMuMywxLjYsNS45LDMuMyw3LjcsNQ0KCQkJbC0xMCwxMC43YzAtMC4zLTEuMy0xLjEtNC0yLjRjLTQuMi0yLTguOS0yLjktMTQuMi0yLjljLTguNSwwLTEzLDIuMi0xMy41LDYuN3YxYzAsMS4yLDAuNCwyLjIsMS4yLDMuMWMyLjIsMi41LDYuMywzLjgsMTIuMywzLjgNCgkJCWMxMC40LDAsMTguMiwyLjksMjMuNCw4LjdjMy4zLDMuOCw0LjksOC4xLDQuOSwxMi45YzAsMS0wLjEsMi0wLjIsMi45Yy0wLjYsNS44LTMuNSwxMC41LTguNywxNGMtNS4xLDMuNy0xMS42LDUuNS0xOS40LDUuNQ0KCQkJQzc4MS40LDQ5MC4xLDc3NC42LDQ4OC42LDc2OC40LDQ4NS44eiIvPg0KCQk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNOTM3LjksNDE2LjlsLTI5LjIsNTQuMXYxOS4xSDg5NHYtMTkuMWwtMjkuNC01NC4xSDg4M2wxOC4zLDM1LjFsMTguNC0zNS4xSDkzNy45eiIvPg0KCQk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNOTkxLjcsNDg1LjhjLTMuMy0xLjYtNS45LTMuMi03LjctNC45bDUuMS01LjNsNC45LTUuNWMxLDAuOSwyLjMsMS44LDQsMi41YzQuMiwyLDguOSwzLDE0LjIsMw0KCQkJYzguNSwwLDEzLjEtMi4zLDEzLjctN3YtMC4zYzAtMS4zLTAuNS0yLjYtMS40LTMuOGMtMi4yLTIuNS02LjMtMy44LTEyLjMtMy44Yy0xMC41LDAtMTguMi0yLjktMjMuMi04LjdjLTMuNC0zLjctNS4xLTgtNS4xLTEyLjkNCgkJCWMwLTAuOSwwLjEtMS44LDAuMi0yLjdjMC44LTUuOCwzLjctMTAuNSw4LjctMTQuMmM1LjEtMy42LDExLjYtNS4zLDE5LjQtNS4zYzcuNSwwLDE0LjQsMS40LDIwLjUsNC4zYzMuMywxLjYsNS45LDMuMyw3LjcsNQ0KCQkJbC0xMCwxMC43YzAtMC4zLTEuMy0xLjEtNC0yLjRjLTQuMi0yLTguOS0yLjktMTQuMi0yLjljLTguNSwwLTEzLDIuMi0xMy41LDYuN3YxYzAsMS4yLDAuNCwyLjIsMS4yLDMuMWMyLjIsMi41LDYuMywzLjgsMTIuMywzLjgNCgkJCWMxMC40LDAsMTguMiwyLjksMjMuNCw4LjdjMy4zLDMuOCw0LjksOC4xLDQuOSwxMi45YzAsMS0wLjEsMi0wLjIsMi45Yy0wLjYsNS44LTMuNSwxMC41LTguNywxNGMtNS4xLDMuNy0xMS42LDUuNS0xOS40LDUuNQ0KCQkJQzEwMDQuNyw0OTAuMSw5OTcuOCw0ODguNiw5OTEuNyw0ODUuOHoiLz4NCgkJPHBhdGggY2xhc3M9InN0MiIgZD0iTTExNTAuNSw0MTYuOXYxNC42aC0yMS45djU4LjdoLTE0Ljh2LTU4LjdIMTA5MnYtMTQuNkgxMTUwLjV6Ii8+DQoJCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik0xMjU0LDQxNi45djE0LjZoLTM2LjdWNDQ2aDMwLjh2MTQuNmgtMzAuOHYxNC44aDM2Ljd2MTQuNmgtNTEuM3YtNzMuMkgxMjU0eiIvPg0KCQk8cGF0aCBjbGFzcz0ic3QyIiBkPSJNMTM0MCw0NjUuMmwzMy44LTQ4LjN2NzMuMmgtMTQuOHYtMjcuOGwtMTguOSwyNy44bC0xOS4xLTI3Ljh2MjcuOGgtMTQuNnYtNzMuMkwxMzQwLDQ2NS4yeiIvPg0KCTwvZz4NCgk8ZyBjbGFzcz0ic3QxIj4NCgkJPHBhdGggY2xhc3M9InN0MiIgZD0iTTE0MzQuNCw0ODUuOGMtMy4zLTEuNi01LjktMy4yLTcuNy00LjlsNS4xLTUuM2w0LjktNS41YzEsMC45LDIuMywxLjgsNCwyLjVjNC4yLDIsOC45LDMsMTQuMiwzDQoJCQljOC41LDAsMTMuMS0yLjMsMTMuNy03di0wLjNjMC0xLjMtMC41LTIuNi0xLjQtMy44Yy0yLjItMi41LTYuMy0zLjgtMTIuMy0zLjhjLTEwLjUsMC0xOC4yLTIuOS0yMy4yLTguN2MtMy40LTMuNy01LjEtOC01LjEtMTIuOQ0KCQkJYzAtMC45LDAuMS0xLjgsMC4yLTIuN2MwLjgtNS44LDMuNy0xMC41LDguNy0xNC4yYzUuMS0zLjYsMTEuNi01LjMsMTkuNC01LjNjNy41LDAsMTQuNCwxLjQsMjAuNSw0LjNjMy4zLDEuNiw1LjksMy4zLDcuNyw1DQoJCQlsLTEwLDEwLjdjMC0wLjMtMS4zLTEuMS00LTIuNGMtNC4yLTItOC45LTIuOS0xNC4yLTIuOWMtOC41LDAtMTMsMi4yLTEzLjUsNi43djFjMCwxLjIsMC40LDIuMiwxLjIsMy4xYzIuMiwyLjUsNi4zLDMuOCwxMi4zLDMuOA0KCQkJYzEwLjQsMCwxOC4yLDIuOSwyMy40LDguN2MzLjMsMy44LDQuOSw4LjEsNC45LDEyLjljMCwxLTAuMSwyLTAuMiwyLjljLTAuNiw1LjgtMy41LDEwLjUtOC43LDE0Yy01LjEsMy43LTExLjYsNS41LTE5LjQsNS41DQoJCQlDMTQ0Ny4zLDQ5MC4xLDE0NDAuNSw0ODguNiwxNDM0LjQsNDg1Ljh6Ii8+DQoJPC9nPg0KCTxwYXRoIGlkPSJDb21iaW5lZC1TaGFwZSIgY2xhc3M9InN0MCIgZD0iTTExNzMsNzkuOWgxMDYuOUwxMTU0LjgsMEwxMDI5LDc5LjloMTAzVjM0OEg4MTYuOUg3NjJsMCwwYy0yNy42LDAtNTAtMjIuNC01MC01MHYtMjkNCgkJbDAsNzlINTBjLTI3LjYsMC01MC0yMi40LTUwLTUwVjUwbDAsMEMwLDIyLjQsMjIuNCwwLDUwLDBsMCwwaDc2N3YyNDRjMCwxMy44LDExLjIsMjUsMjUsMjVoMTg3VjBoNTE2bDAsMGMyNy42LDAsNTAsMjIuNCw1MCw1MA0KCQl2MTY5YzAsMjcuNi0yMi40LDUwLTUwLDUwaC0yNjZ2NzloLTEwNlY3OS45eiBNOTkuNyw3OS44bDAuMiw2MC42aDE1Ny44djY5LjVIOTkuNXY1OC40aDI1OC42TDU3NC40LDgwTDk5LjcsNzkuOHogTTcxMi43LDI2OC40DQoJCUw3MTIsODBMNDk0LjgsMjY5TDcxMi43LDI2OC40eiBNMTI4MCw4MHYxMTNoMTkyYzExLDAsMjAtOSwyMC0yMHYtNzNjMC0xMS05LTIwLTIwLTIwSDEyODB6Ii8+DQoJPHBhdGggaWQ9IkNvbWJpbmVkLVNoYXBlXzFfIiBjbGFzcz0ic3QzIiBkPSJNMzczLDI5NS40VjI3OUw2MTguNiw2NEgzNzNWMTZoMzI0djM1LjJWNzBMNDUxLjQsMjg0SDY5N3Y0OEgzNzNWMjk1LjR6Ii8+DQo8L2c+DQo8L3N2Zz4NCg==" alt="EZUP Crane Systems" width="170" height="56" style="height:56px;width:auto;margin-bottom:8px"><div class="muted">627 Claypool Hill Mall Road, Cedar Bluff, VA 24609 · (276) 582-1970 · brad@ezupcranes.com</div></div>
+      <div style="text-align: right"><div><strong>Quotation ${quoteNo}</strong></div><div class="muted">Date: ${fmtDate(today)}</div><div class="muted">Valid through: ${fmtDate(valid)}</div></div>
+    </div>
+    <span class="stamp ${firm ? "yes" : "no"}">${firm ? "Firm quotation" : "Budget figure only · costs out of date"}</span>
+    <div><h3 style="margin-bottom: 8px">Scope of supply</h3><ul style="margin: 0; padding-left: 20px">${scope.map(s => `<li>${esc(s)}</li>`).join("")}</ul></div>
+    <div class="table-box" style="border-color:#DDDBD4"><table>
+      <tbody><tr><td>Crane system as described</td><td class="n">${money(r.sell)}</td></tr></tbody>
+      <tfoot><tr><td>Total, excluding taxes</td><td class="n">${money(r.sell)}</td></tr></tfoot>
+    </table></div>
+    <div><h3 style="margin-bottom: 6px">Terms</h3>
+      <p class="muted" style="font-size: .9rem">Price valid through ${fmtDate(valid)}. Excludes foundations, building modifications and electrical service to the crane disconnect unless stated. Lead time confirmed at order.</p></div>
+    <div class="clause">
+      <div class="draft">Draft clause · attorney review required before use</div>
+      <p><strong>Material cost escalation.</strong> This price is based on EZUP's costs for structural steel, purchased crane components, hoists and electrical equipment on the quotation date. If, before those materials are purchased for this order, EZUP's cost for any one of those categories rises by more than ${RULES.escalationPct}% over the cost used in this quotation, EZUP may adjust the price for that category by the amount of the increase, supported by supplier documentation. EZUP will notify the buyer in writing before proceeding. The buyer may accept the adjusted price or cancel the order and receive a refund of any deposit, less costs already incurred.</p>
+    </div>`;
+}
+
+// ================= EVENTS =================
+document.querySelectorAll("main input:not(.cost-input), main select").forEach(el => el.addEventListener("input", render));
+$("prices").addEventListener("change", e => {
+  const id = e.target.dataset.id; if (!id) return;
+  const p = P(id); const v = Number(e.target.value);
+  if (Number.isFinite(v) && v >= 0) { p.cost = v; p.verified = iso(today); savePrices(); render(); }
+});
+$("prices").addEventListener("click", e => {
+  const id = e.target.dataset.verify; if (!id) return;
+  P(id).verified = iso(today); savePrices(); render();
+});
+$("reset-prices").addEventListener("click", () => { prices = JSON.parse(JSON.stringify(SAMPLE_PRICES)); savePrices(); render(); });
+render();
+</script>
