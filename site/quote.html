@@ -46,7 +46,7 @@
 
 <section class="section">
 <div class="wrap split" style="align-items: start">
-<form class="form" data-request="EZUP quote request" novalidate>
+<form class="form" data-endpoint="/api/request" data-request="EZUP quote request" novalidate>
 <fieldset>
 <legend>The lift</legend>
 <div class="field"><label for="q-product">What do you need? *</label>
@@ -76,6 +76,7 @@
 <div class="field"><label for="q-when">When do you need it?</label>
 <select id="q-when" name="timing"><option value="">Choose one</option><option>As soon as possible</option><option>1 to 3 months</option><option>3 to 6 months</option><option>Budgeting for later</option></select></div>
 </fieldset>
+<div class="field" style="position:absolute;left:-9999px" aria-hidden="true"><label for="q-website">Leave this empty</label><input id="q-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
 <button class="btn btn-primary" type="submit">Send request</button>
 </form>
 

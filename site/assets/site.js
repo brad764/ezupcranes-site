@@ -44,7 +44,7 @@
       var data = {};
       var lines = [form.getAttribute('data-request')];
       form.querySelectorAll('input, select, textarea').forEach(function (el) {
-        if (!el.name) return;
+        if (!el.name || el.name === 'website' && !el.value) return;
         var v = String(el.value).trim();
         data[el.name] = v;
         if (v) {
@@ -58,7 +58,7 @@
       if (endpoint) {
         btn.disabled = true;
         fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: form.getAttribute('data-request'), fields: data }) })
-          .then(function (r) { if (!r.ok) throw new Error(); showDone(form, btn, 'Request received. We will call or email within one business day.', null); })
+          .then(function (r) { if (!r.ok) throw new Error(); form.reset(); showDone(form, btn, 'Thank you. Your request was sent to EZUP. We reply within one business day.', null); })
           .catch(function () { showDone(form, btn, 'We could not send this automatically. Copy it below and email it to brad@ezupcranes.com, or call (276) 582-1970.', text); })
           .finally(function () { btn.disabled = false; });
       } else {
