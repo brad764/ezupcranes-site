@@ -120,7 +120,7 @@ async function toCrm(env, type, f, summary) {
       emails: [{ type: "work", value: f.email }],
       phones: f.phone ? [{ type: "work", value: f.phone }] : undefined,
       zip_code: f.site_zip || undefined,
-      status_id: "lead",
+      // status defaults to Lead; the API rejects "lead" as a status_id
       lead_source_id: "email_web",
       tags: ["EZUP"]
     };
