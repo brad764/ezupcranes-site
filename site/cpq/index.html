@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>EZUP CPQ</title>
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="cpq.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-row">
+    <a class="brand" href="#quotes"><img src="/assets/logo-dark.svg" alt="EZUP Crane Systems" width="122" height="40"><span>CPQ</span></a>
+    <nav class="tabs" aria-label="CPQ">
+      <a href="#new" data-tab="new">New quote</a>
+      <a href="#quotes" data-tab="quotes">Quotes</a>
+      <a href="#prices" data-tab="prices">Prices &amp; rules</a>
+    </nav>
+    <span class="who" id="who"></span>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="banner" class="notice" hidden></div>
+
+  <!-- QUOTE EDITOR -->
+  <section id="view-quote" hidden>
+    <div class="row between">
+      <div><span class="eyebrow" id="q-state">New quote</span><h1 id="q-title">New quote</h1></div>
+      <div class="row" id="q-actions">
+        <button class="btn" id="btn-save" type="button">Save draft</button>
+        <button class="btn primary" id="btn-issue" type="button">Issue quote</button>
+        <button class="btn" id="btn-revise" type="button" hidden>Revise</button>
+        <button class="btn" id="btn-crm" type="button" hidden>Send to OnePageCRM</button>
+        <button class="btn" id="btn-print" type="button" hidden>Print / PDF</button>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="stack">
+        <fieldset class="panel" id="fs-customer">
+          <legend>Customer</legend>
+          <div class="fields">
+            <div class="field"><label for="c-name">Contact name</label><input id="c-name" autocomplete="off"></div>
+            <div class="field"><label for="c-company">Company</label><input id="c-company" autocomplete="off"></div>
+            <div class="field"><label for="c-email">Email</label><input id="c-email" type="email" autocomplete="off"></div>
+            <div class="field"><label for="c-phone">Phone</label><input id="c-phone" type="tel" autocomplete="off"></div>
+            <div class="field wide"><label for="c-site">Job site</label><input id="c-site" autocomplete="off" placeholder="City, state"></div>
+            <div class="field wide"><label for="c-project">Project name</label><input id="c-project" autocomplete="off" placeholder="e.g. Bay 2 workstation crane"></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="panel" id="fs-system">
+          <legend>The system</legend>
+          <div class="fields">
+            <div class="field"><label for="i-cap">Capacity</label><select id="i-cap"><option value="0.5">1/2 ton</option><option value="1">1 ton</option><option value="2">2 ton</option><option value="3" selected>3 ton</option></select></div>
+            <div class="field"><label for="i-power">Power</label><select id="i-power"><option value="480">480 V 3-phase</option><option value="230">230 V 3-phase</option><option value="120">120 V single phase</option></select></div>
+            <div class="field"><label for="i-op">Operation</label><select id="i-op"><option value="radio">Motorized, radio</option><option value="pendant">Motorized, pendant</option><option value="manual">Manual push-pull</option></select></div>
+            <div class="field"><label for="i-span">Bridge span (ft)</label><input id="i-span" type="number" min="8" max="60" step="1" value="30"></div>
+            <div class="field"><label for="i-runway">Runway length (ft)</label><input id="i-runway" type="number" min="10" max="400" step="1" value="60"></div>
+            <div class="field"><label for="i-height">Height under runway (ft)</label><input id="i-height" type="number" min="8" max="40" step="0.5" value="16"></div>
+            <div class="field"><label for="i-support">Runway support</label><select id="i-support"><option value="free">Free-standing columns</option><option value="building">Hung from building steel</option></select></div>
+            <div class="field"><label for="i-install">Installation</label><select id="i-install"><option value="ezup">EZUP installs</option><option value="customer">Customer installs</option></select></div>
+            <div class="field"><label for="i-miles">Miles to site</label><input id="i-miles" type="number" min="0" max="3000" step="10" value="150"></div>
+            <div class="field"><label for="i-margin">Margin (%)</label><input id="i-margin" type="number" min="20" max="60" step="1" value="27"></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="panel" id="fs-extras">
+          <legend>Added items</legend>
+          <p class="hint">Anything not in the standard system: tie-backs, extra hoist, special paint. Enter your cost; margin is applied.</p>
+          <div id="extras" class="stack-sm"></div>
+          <button class="btn small" type="button" id="btn-add-extra">Add item</button>
+        </fieldset>
+
+        <fieldset class="panel" id="fs-notes">
+          <legend>Notes</legend>
+          <div class="field wide"><label for="q-notes">Notes on the quote (customer sees these)</label><textarea id="q-notes" rows="3"></textarea></div>
+          <div class="field wide"><label for="q-internal">Internal notes (never printed)</label><textarea id="q-internal" rows="2"></textarea></div>
+        </fieldset>
+      </div>
+
+      <aside class="stack sticky">
+        <div class="panel">
+          <span class="eyebrow">Selling price</span>
+          <div class="price-big" id="o-price">$0</div>
+          <p class="hint" id="o-price-sub"></p>
+          <div id="o-status" class="notice" role="status"></div>
+          <div id="o-notes" class="notice warn" hidden></div>
+        </div>
+        <div class="panel">
+          <h2>Recommendation</h2>
+          <dl class="kv" id="o-rec"></dl>
+          <details>
+            <summary>Preliminary girder check</summary>
+            <div id="o-check" class="stack-sm small"></div>
+          </details>
+        </div>
+      </aside>
+    </div>
+
+    <section class="panel">
+      <div class="row between"><h2>Bill of materials and cost</h2><span class="eyebrow">Internal · not printed</span></div>
+      <div class="table-box"><table>
+        <thead><tr><th>Item</th><th>Category</th><th class="n">Qty</th><th>Unit</th><th class="n">Unit cost</th><th class="n">Extended</th><th>Cost status</th></tr></thead>
+        <tbody id="o-bom"></tbody><tfoot id="o-bom-foot"></tfoot>
+      </table></div>
+    </section>
+
+    <section class="stack">
+      <div class="row between"><h2>Customer quote</h2><span class="eyebrow">What prints</span></div>
+      <article class="sheet" id="sheet"></article>
+    </section>
+
+    <details class="panel" id="q-history-wrap" hidden><summary>History</summary><ul id="q-history" class="small"></ul></details>
+  </section>
+
+  <!-- QUOTE LIST -->
+  <section id="view-quotes" hidden>
+    <div class="row between"><h1>Quotes</h1><a class="btn primary" href="#new">New quote</a></div>
+    <div class="row"><label class="sr-only" for="q-search">Search quotes</label><input id="q-search" type="search" placeholder="Search by number, customer or system"></div>
+    <div class="table-box"><table>
+      <thead><tr><th>Quote</th><th>Status</th><th>Customer</th><th>System</th><th class="n">Price</th><th>Date</th><th>Valid through</th><th>CRM</th></tr></thead>
+      <tbody id="q-list"></tbody>
+    </table></div>
+  </section>
+
+  <!-- PRICES & RULES -->
+  <section id="view-prices" hidden>
+    <div class="row between">
+      <div><h1>Prices &amp; rules</h1><p class="hint">Each cost stays good for the number of days in Max age after you verify it. A quote can't be issued while any cost it uses is out of date.</p></div>
+      <div class="row"><button class="btn primary" type="button" id="btn-save-prices">Save changes</button></div>
+    </div>
+    <div class="panel">
+      <div class="row between"><h2>Costs</h2><button class="btn small" type="button" id="btn-add-price">Add cost item</button></div>
+      <div class="table-box"><table>
+        <thead><tr><th>Item</th><th>Category</th><th class="n">Cost ($)</th><th>Unit</th><th>Last verified</th><th class="n">Max age (days)</th><th>Status</th><th></th></tr></thead>
+        <tbody id="p-list"></tbody>
+      </table></div>
+    </div>
+    <div class="panel">
+      <h2>Rules</h2>
+      <div class="fields" id="r-fields"></div>
+    </div>
+  </section>
+</main>
+
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

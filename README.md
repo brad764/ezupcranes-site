@@ -20,3 +20,12 @@ Set these in Cloudflare Pages > ezupcranes-site > Settings > Variables and Secre
 - `RESEND_API_KEY` (secret), `NOTIFY_EMAIL` = brad@ezupcranes.com
 - `ONEPAGE_USER_ID` (secret), `ONEPAGE_API_KEY` (secret) from OnePageCRM > Apps > API configuration
 Then redeploy (Deployments > ... > Retry deployment). If a key is missing, the form falls back to showing the visitor a copy to email.
+
+## CPQ (ezupcranes.com/cpq/)
+Internal configure-price-quote tool. Browser files in `site/cpq/`, API in `functions/api/cpq/`, shared logic in `lib/`.
+Needs, in Cloudflare Pages > ezupcranes-site > Settings:
+- Binding: KV namespace, variable name `CPQ`
+- Variables: `ACCESS_TEAM_DOMAIN` (e.g. ezup.cloudflareaccess.com), `ACCESS_AUD` (Access application audience tag), `ADMIN_EMAILS` (brad@ezupcranes.com)
+- A Cloudflare Access application covering ezupcranes.com/cpq and ezupcranes.com/api/cpq
+Every API call verifies the Access token; without these settings the API refuses all requests.
+Local test: `wrangler pages dev site --kv CPQ --binding DEV_AUTH_BYPASS=1` (bypass only works on localhost).
