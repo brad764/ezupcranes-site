@@ -43,8 +43,9 @@ export async function onRequestPost({ request, env }) {
     .map(([k, v]) => `${LABELS[k] || k}: ${v}`)
     .join("\n");
 
-  const results = await Promise.allSettled([sendEmail(env, type, f, summary), toCrm(env, type, f, summary)]);
-  const [mail, crm] = results.map(r => (r.status === "fulfilled" ? r.value : { ok: false, error: String(r.reason) }));
+  // CRM first, so the email can report whether the lead reached OnePageCRM.
+  const crm = await toCrm(env, type, f, summary).catch(e => ({ ok: false, error: String(e && e.message || e) }));
+  const mail = await sendEmail(env, type, f, summary, crm).catch(e => ({ ok: false, error: String(e && e.message || e) }));
 
   if (!mail.ok) console.log("email failed:", mail.error);
   if (!crm.ok) console.log("crm failed:", crm.error);
@@ -59,15 +60,19 @@ export function onRequest({ request }) {
 }
 
 // ---------- email ----------
-async function sendEmail(env, type, f, summary) {
+async function sendEmail(env, type, f, summary, crm) {
   if (!env.RESEND_API_KEY || !env.NOTIFY_EMAIL) return { ok: false, error: "email not configured" };
   const who = f.company ? `${f.name}, ${f.company}` : f.name;
+  const crmLine = crm && crm.ok
+    ? "Added to OnePageCRM with a note and an ASAP next action."
+    : `NOT added to OnePageCRM. Add this lead by hand. Reason: ${(crm && crm.error) || "unknown"}`;
   const html = `<h2 style="font-family:Arial,sans-serif">${esc(type)}</h2>
 <table style="font-family:Arial,sans-serif;font-size:14px;border-collapse:collapse">
 ${Object.entries(f).filter(([k, v]) => v && k !== "website").map(([k, v]) =>
   `<tr><td style="padding:4px 12px 4px 0;color:#555;vertical-align:top">${esc(LABELS[k] || k)}</td><td style="padding:4px 0;white-space:pre-wrap">${esc(v)}</td></tr>`).join("\n")}
 </table>
-<p style="font-family:Arial,sans-serif;font-size:13px;color:#555">Reply to this email to answer ${esc(f.name)} directly. This request was also added to OnePageCRM.</p>`;
+<p style="font-family:Arial,sans-serif;font-size:13px;color:#555">Reply to this email to answer ${esc(f.name)} directly.</p>
+<p style="font-family:Arial,sans-serif;font-size:13px;color:${crm && crm.ok ? "#1E6B3A" : "#B3261E"}">${esc(crmLine)}</p>`;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -77,7 +82,7 @@ ${Object.entries(f).filter(([k, v]) => v && k !== "website").map(([k, v]) =>
       to: [env.NOTIFY_EMAIL],
       reply_to: f.email,
       subject: `${type}: ${who}`,
-      text: `${type}\n\n${summary}\n\nReply to this email to answer ${f.name} directly.`,
+      text: `${type}\n\n${summary}\n\nReply to this email to answer ${f.name} directly.\n${crmLine}`,
       html
     })
   });
