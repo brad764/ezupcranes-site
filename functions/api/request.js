@@ -19,7 +19,7 @@ const OPC = "https://app.onepagecrm.com/api/v3";
 const MAX_FIELD = 4000;
 
 const LABELS = {
-  type: "I am a", product: "Needs", capacity: "Capacity", operation: "Operation", girder: "Girder",
+  type: "I am a", interest: "Was looking at", product: "Needs", capacity: "Capacity", operation: "Operation", girder: "Girder",
   span: "Bridge span (ft)", runway_length: "Runway length (ft)", clear_height: "Clear height (ft)",
   support: "Support", power: "Power", notes: "Details", name: "Name", company: "Company",
   email: "Email", phone: "Phone", site_zip: "Site ZIP", timing: "Timing", territory: "Territory"

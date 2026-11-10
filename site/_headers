@@ -3,3 +3,7 @@
   Cache-Control: no-store
 /api/*
   X-Robots-Tag: noindex
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/img/render/*
+  Cache-Control: public, max-age=86400

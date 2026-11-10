@@ -1,3 +1,6 @@
 __pycache__/
 .DS_Store
 .wrangler/
+renders/out/
+renders/.venv/
+node_modules/

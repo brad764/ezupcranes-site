@@ -1,6 +1,15 @@
 /* EZUP Crane Systems — site styles
    Layout: shop-floor bands. Light concrete ground, charcoal bands, crane-yellow
    used only for action and the nameplate motif taken from the bridge labels. */
+/* Fonts are served from this site (SIL Open Font License), so no request leaves for a font host. */
+@font-face { font-family: "Barlow Condensed"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/barlow-condensed-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Barlow Condensed"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/barlow-condensed-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Barlow"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/barlow-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Barlow"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/barlow-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Barlow"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/barlow-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
+
 :root {
   --ground: #F1F0EC;        /* sealed concrete */
   --surface: #FFFFFF;
@@ -156,8 +165,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* product list */
 .product-group { display: flex; flex-direction: column; gap: 20px; }
 .product-group + .product-group { margin-top: 56px; }
-.prod { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.prod-img { width: calc(100% + 48px); max-width: none; margin: -24px -24px 8px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius) var(--radius) 0 0; border-bottom: 1px solid var(--rule); }
+.prod { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 0 24px 24px; display: flex; flex-direction: column; gap: 8px; min-width: 0; scroll-margin-top: 110px; }
+.prod-img { width: calc(100% + 48px); max-width: none; margin: 0 -24px 12px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius) var(--radius) 0 0; background: #DAD8D2; }
+.prod:target { outline: 3px solid var(--yellow); outline-offset: 2px; }
+.grid.products { grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 24px; }
+@media (min-width: 760px) { .grid.products.two { grid-template-columns: repeat(2, minmax(0, 1fr)); } .products.two .prod h3 { font-size: 1.75rem; } }
+.render-note { font-size: 0.95rem; color: var(--ink-soft); max-width: 70ch; }
 .prod h3 { font-size: 1.5rem; }
 .prod p { color: var(--ink-soft); font-size: 1rem; }
 .prod ul { margin: 4px 0 0; padding-left: 20px; color: var(--ink-soft); font-size: 0.98rem; }
@@ -236,3 +249,136 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size
 .foot-brand img { height: 52px; width: auto; }
 .legal { border-top: 1px solid var(--band-rule); padding-top: 20px; font-size: 0.85rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
 .foot-logo-d { display: block; }
+
+
+/* ------------------------------------------------------------------
+   Home hero: a general-arrangement view of the crane. The dimension
+   lines and item balloons are the drawing conventions customers see
+   on the layout drawings we send them; each balloon keys to the list.
+   ------------------------------------------------------------------ */
+.sheet-hero { background: var(--ground); border-bottom: 1px solid var(--rule); padding-block: clamp(28px, 4vw, 56px) clamp(40px, 6vw, 72px); overflow: hidden; }
+.sheet-hero .wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(28px, 4vw, 48px); align-items: center; }
+.sheet-copy { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.sheet-copy h1 { font-size: clamp(2.9rem, 6.4vw, 5rem); line-height: 0.98; }
+.ga { min-width: 0; gap: 10px; }
+.ga-stage { position: relative; }
+.ga-stage img { width: 100%; height: auto; }
+.ga-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.ga-lines path, .ga-lines line { stroke: var(--ink); stroke-width: 1.4; fill: none; vector-effect: non-scaling-stroke; }
+.ga-lines .ext { stroke-width: 1; opacity: 0.55; }
+.ga-lines .tick { stroke-width: 2.4; }
+.dim { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; font-family: var(--mono); font-weight: 500;
+  font-size: clamp(0.7rem, 1.25vw, 0.92rem); letter-spacing: 0.02em; color: var(--ink); background: var(--ground); padding: 1px 8px; }
+.balloon { position: absolute; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%;
+  background: var(--ink); color: var(--ground); font-family: var(--display); font-weight: 700; font-size: 1.05rem; line-height: 30px;
+  text-align: center; box-shadow: 0 0 0 3px var(--ground); cursor: default; transition: background-color .15s, color .15s, transform .15s; }
+.balloon.is-on { background: var(--yellow); color: var(--yellow-ink); transform: translate(-50%, -50%) scale(1.18); }
+.sheet-hero .wrap > h2.sr { grid-column: 1 / -1; }
+.ga-key { list-style: none; margin: 0; padding: 26px 0 0; border-top: 2px solid var(--ink); counter-reset: key;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 22px 36px; }
+.ga-key li { counter-increment: key; display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 14px; row-gap: 2px; align-content: start; border-radius: var(--radius); }
+.ga-key li::before { content: counter(key); grid-row: 1 / span 2; width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--ground);
+  font-family: var(--display); font-weight: 700; font-size: 1.05rem; line-height: 30px; text-align: center; transition: background-color .15s, color .15s; }
+.ga-key li.is-on::before { background: var(--yellow); color: var(--yellow-ink); }
+.ga-key h3 { font-size: 1.4rem; grid-column: 2; align-self: center; }
+.ga-key p { font-size: 1rem; color: var(--ink-soft); grid-column: 2; }
+.ga-note { font-size: 0.95rem; color: var(--ink-soft); }
+@media (max-width: 560px) { .balloon { width: 22px; height: 22px; line-height: 22px; font-size: 0.85rem; box-shadow: 0 0 0 2px var(--ground); } }
+@media (min-width: 980px) {
+  .sheet-hero .wrap { grid-template-columns: minmax(0, 5fr) minmax(0, 8fr); }
+  .ga { margin-right: clamp(-90px, -5vw, 0px); }
+  .ga-key, .ga-note { grid-column: 1 / -1; }
+}
+
+/* ------------------------------------------------------------------
+   Product line-up: the list of names is the control; the picture and
+   the facts follow it. Below 960 px it is a swipeable row instead.
+   ------------------------------------------------------------------ */
+.lineup-body { margin-top: 36px; }
+.lineup-list { display: none; }
+.lineup-view { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 12px; margin-inline: -16px; padding-inline: 16px; scrollbar-color: var(--band-rule) transparent; }
+.lu { flex: 0 0 min(84vw, 420px); scroll-snap-align: center; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.lu img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius); background: #DAD8D2; }
+.lu-text { display: flex; flex-direction: column; gap: 10px; }
+.lu-text h3 { font-size: 1.8rem; }
+.lu-fam { font-family: var(--mono); font-size: 0.8rem; color: var(--yellow); letter-spacing: 0.04em; }
+.lu-range { font-family: var(--mono); font-size: 0.9rem; color: var(--band-ink); }
+.lu .btn-row { align-items: center; gap: 12px 22px; margin-top: 4px; }
+.lu .textlink { color: var(--band-ink); }
+@media (min-width: 960px) {
+  .lineup-body.is-explorer { display: grid; grid-template-columns: minmax(270px, 1fr) minmax(0, 640px); gap: clamp(32px, 5vw, 72px); align-items: start; }
+  .is-explorer .lineup-list { display: flex; flex-direction: column; gap: 26px; }
+  .lineup-group { display: flex; flex-direction: column; gap: 2px; }
+  .lineup-group h3 { font-family: var(--mono); font-weight: 500; font-size: 0.8rem; letter-spacing: 0.04em; color: var(--band-soft); margin-bottom: 6px; }
+  .lineup-list button { appearance: none; background: none; border: 0; border-left: 3px solid var(--band-rule); margin: 0; padding: 5px 0 5px 16px; text-align: left; cursor: pointer;
+    font-family: var(--display); font-weight: 600; font-size: clamp(1.5rem, 2.1vw, 1.9rem); line-height: 1.12; color: var(--band-soft); transition: color .12s, border-color .12s; }
+  .lineup-list button:hover { color: var(--band-ink); }
+  .lineup-list button[aria-selected="true"] { color: var(--band-ink); border-left-color: var(--yellow); }
+  .lineup-body.is-explorer .lineup-view { display: block; overflow: visible; margin: 0; padding: 0; position: sticky; top: 104px; }
+  .is-explorer .lu { display: none; }
+  .is-explorer .lu.is-active { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .is-explorer .lu-text { max-width: 60ch; }
+  .is-explorer .lu-fam { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .balloon { transition: none; } }
+
+/* two-up comparison figures above a spec table */
+.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 20px; }
+.duo img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius); background: #DAD8D2; }
+.duo figcaption { font-family: var(--display); font-weight: 700; font-size: 1.5rem; color: var(--ink); letter-spacing: 0; }
+.duo figcaption span { display: block; font-family: var(--body); font-weight: 400; font-size: 1rem; color: var(--ink-soft); }
+
+/* renders sit on a studio backdrop; keep the box filled while they load */
+.hero-photo img, .gallery img, .split img { background: #DAD8D2; }
+.interest { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 12px 14px; border: 2px solid var(--yellow); border-radius: var(--radius); font-size: 1rem; }
+.interest[hidden] { display: none; }
+.interest button { appearance: none; background: none; border: 0; padding: 0; font: inherit; color: var(--ink-soft); text-decoration: underline; cursor: pointer; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.prod-links { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: auto; padding-top: 10px; }
+.ga-lines circle { fill: var(--ink); stroke: none; }
+.lu, .prod, .lineup-view { position: relative; }   /* keeps the visually hidden link text inside its scrolling row */
+.skip { position: absolute; left: 12px; top: -60px; z-index: 50; background: var(--yellow); color: var(--yellow-ink); padding: 10px 16px; font-weight: 600; border-radius: var(--radius); }
+.skip:focus { top: 12px; }
+.family-hero .wrap { grid-template-columns: minmax(0, 1fr); gap: clamp(16px, 3vw, 32px); }
+.family-hero .sheet-copy h1 { font-size: var(--step-5); max-width: 18ch; }
+.family-hero .ga { margin-right: 0; }
+.family-hero { border-bottom: 0; padding-bottom: 0; }
+
+/* ------------------------------------------------------------------
+   Crane layout tool (EZUP Cranes page). The still picture shows until
+   the 3D model is running; without WebGL it simply stays.
+   ------------------------------------------------------------------ */
+.layout3d { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 36px; }
+.l3-view { position: relative; aspect-ratio: 4 / 3; min-width: 0; }
+.l3-still { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); background: #DAD8D2; }
+.l3-canvas { position: absolute; inset: 0; display: none; }
+.l3-canvas canvas { width: 100%; height: 100%; display: block; border-radius: var(--radius); }
+.l3-dim, .l3-hint { display: none; }
+.is-live .l3-still { display: none; }
+.is-live .l3-canvas { display: block; }
+.is-live .l3-dim { display: block; position: absolute; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap;
+  font-family: var(--mono); font-weight: 500; font-size: 0.85rem; color: var(--ink); background: var(--surface); padding: 1px 7px; }
+.is-live .l3-hint { display: block; position: absolute; left: 0; bottom: 0; font-size: 0.9rem; color: var(--ink-soft); pointer-events: none; }
+.l3-controls { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.l3-controls[hidden] { display: none; }
+.l3-seg { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.l3-seg legend { font-weight: 600; padding: 0; margin-bottom: 8px; }
+.l3-seg label { position: relative; display: inline-flex; }
+.l3-seg input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.l3-seg span { display: inline-flex; align-items: center; justify-content: center; min-width: 68px; min-height: 46px; padding: 0 14px;
+  border: 2px solid var(--rule); border-radius: var(--radius); font-weight: 600; }
+.l3-seg input:checked + span { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.l3-seg input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+.l3-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: baseline; }
+.l3-field label { font-weight: 600; }
+.l3-field output { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.l3-field input[type="range"] { grid-column: 1 / -1; width: 100%; height: 34px; margin: 0; accent-color: var(--ink); }
+.l3-fact { font-size: 1rem; color: var(--ink-soft); padding-top: 14px; border-top: 1px solid var(--rule); }
+.l3-fact strong { color: var(--ink); font-family: var(--mono); font-weight: 500; margin-left: 8px; }
+.l3-controls .btn { align-self: flex-start; }
+@media (min-width: 980px) { .layout3d { grid-template-columns: minmax(0, 1fr) 340px; gap: 56px; align-items: center; } }
+.door-img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius); background: #DAD8D2; margin-bottom: 8px; }
+.doors .textlink { align-self: flex-start; }
+.doors h2 { font-size: var(--step-3); }
+.doors { gap: clamp(32px, 5vw, 64px); }
