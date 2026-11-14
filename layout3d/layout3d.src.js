@@ -125,12 +125,6 @@ export function mount(host, opts) {
         box(g, 0.5, 0.025, 0.5, x, 0.0125, z, M.gray);
         box(g, col, Hr - d - 0.025, col, x, 0.025 + (Hr - d - 0.025) / 2, z, M.gray);
         box(g, 0.3, 0.02, 0.3, x, Hr - d - 0.01, z, M.gray);
-        for (const dir of [-1, 1]) {
-          if ((i === 0 && dir < 0) || (i === bays && dir > 0)) continue;
-          const k = Math.min(0.85, Hr * 0.3);
-          const br = box(g, 0.064, 0.064, k * Math.SQRT2, x, Hr - d - k / 2, z + dir * (col / 2 + k / 2), M.gray);
-          br.rotation.x = -dir * Math.PI / 4;
-        }
       }
       ibeamZ(g, d, bf, L + 0.5, x, Hr, 0, M.gray);
       for (const e of [-1, 1]) box(g, bf * 0.8, 0.2, 0.1, x, Hr + 0.1, e * (L / 2 + 0.18), M.yellow);
@@ -156,11 +150,13 @@ export function mount(host, opts) {
       cyl(g, 0.075, 0.26, x - sx * 0.18, yT + 0.02, zb + Lt / 2 - 0.25, M.black, 'z');
     }
     for (const e of [-1, 1]) {
-      box(g, S + tube + 0.04, gh, gw, 0, gy0 + gh / 2, zb + e * gs / 2, M.yellow);
-      box(g, S + tube - 0.05, 0.012, 0.05, 0, gy0 + gh + 0.006, zb + e * gs / 2, M.zinc);
+      const zc = zb + e * gs / 2, fb = 0.17, tf = 0.012;
+      box(g, S + tube + 0.04, tf, fb, 0, gy0 + gh - tf / 2, zc, M.yellow);
+      box(g, S + tube + 0.04, tf, fb, 0, gy0 + tf / 2, zc, M.yellow);
+      box(g, S + tube + 0.04, gh - 2 * tf, 0.009, 0, gy0 + gh / 2, zc, M.yellow);
     }
-    const yRail = gy0 + gh + 0.012;
-    const zFace = zb + gs / 2 + gw / 2;                          // girder face toward the viewer (+Z)
+    const yRail = gy0 + gh;
+    const zFace = zb + gs / 2 + 0.085;                          // girder face toward the viewer (+Z)
     for (let i = 0; i < 4; i++) box(g, S - 1.3, 0.022, 0.014, -0.35, gy0 + 0.035 + i * 0.034, zFace + 0.05, M.orange);
     box(g, 0.4, 0.5, 0.2, S / 2 - 0.62, gy0 + gh - 0.22, zFace + 0.1, M.white);
     cyl(g, 0.004, 0.14, S / 2 - 0.48, gy0 + gh + 0.1, zFace + 0.1, M.black, 'y');

@@ -147,12 +147,6 @@ export function mount(host, opts) {
         if (free) {
           plateAt(g, x, z, (G.column.basePlate || 16) * IN);
           box(g, col, Hr - d - 0.025, col, x, 0.025 + (Hr - d - 0.025) / 2, z, M.gray);
-          for (const dir of [-1, 1]) {
-            if ((i === 0 && dir < 0) || (i === bays && dir > 0)) continue;
-            const k = Math.min(0.85, Hr * 0.3);
-            const br = box(g, 0.064, 0.064, k * Math.SQRT2, x, Hr - d - k / 2, z + dir * (col / 2 + k / 2), M.gray);
-            br.rotation.x = -dir * Math.PI / 4;
-          }
         } else {
           cyl(g, 0.012, 1.0, x, Hr + 0.5, z, M.zinc, 'y');
         }
@@ -180,11 +174,8 @@ export function mount(host, opts) {
         cyl(g, 0.075, 0.26, x - sx * 0.18, yT + 0.02, zb + Lt / 2 - 0.25, M.black, 'z');
       }
     }
-    for (const e of [-1, 1]) {
-      box(g, S + tube + 0.04, gh, gw, 0, gy0 + gh / 2, zb + e * gs / 2, M.yellow);
-      box(g, S + tube - 0.05, 0.012, 0.05, 0, gy0 + gh + 0.006, zb + e * gs / 2, M.zinc);
-    }
-    const yRail = gy0 + gh + 0.012, zFace = zb + gs / 2 + gw / 2;
+    for (const e of [-1, 1]) ibeamX(g, gh, gw, S + tube + 0.04, 0, gy0 + gh, zb + e * gs / 2, M.yellow);
+    const yRail = gy0 + gh, zFace = zb + gs / 2 + gw / 2;
     if (G.motorized) {
       for (let i = 0; i < 4; i++) box(g, S - 1.3, 0.022, 0.014, -0.35, gy0 + 0.035 + i * 0.034, zFace + 0.05, M.orange);
       box(g, 0.4, 0.5, 0.2, S / 2 - 0.62, gy0 + gh - 0.22, zFace + 0.1, M.white);
@@ -269,9 +260,6 @@ export function mount(host, opts) {
         for (const sz of [-1, 1]) {
           plateAt(g, x, sz * W / 2, cb + 0.2);
           box(g, cb, top - hd - 0.025, cb, x, 0.025 + (top - hd - 0.025) / 2, sz * W / 2, M.gray);
-          const k = 0.75;
-          const kb = box(g, 0.06, k * Math.SQRT2, 0.06, x, top - hd - k / 2, sz * (W / 2 - k / 2), M.gray);
-          kb.rotation.x = -sz * Math.PI / 4;
         }
       } else {
         cyl(g, 0.012, 1.0, x, H + bd + 0.5, 0, M.zinc, 'y');
