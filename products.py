@@ -6,6 +6,8 @@ ratings), img (file stem in site/assets/img/render), alt, quote (option preselec
 on the quote form), link (optional extra link: label, href).
 """
 
+CONFIGURE = {"industrial": "industrial", "professional": "professional", "jib": "jib", "gantry": "gantry", "monorail": "monorail"}
+
 QUOTE_OPTIONS = {
     "bridge": "Workstation / bridge crane", "monorail": "Monorail", "jib": "Jib crane", "gantry": "Gantry crane",
     "tarping": "Tarping crane", "beam": "Lifting beam or spreader", "hoist": "Hoist only", "upgrade": "Upgrade or retrofit",

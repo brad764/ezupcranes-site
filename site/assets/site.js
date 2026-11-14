@@ -211,8 +211,8 @@
       if (dims.span) dims.span.textContent = num(s.span) + ' ft span';
       if (dims.runway) dims.runway.textContent = num(s.runway) + ' ft runway';
       if (dims.under) dims.under.textContent = num(s.under) + ' ft';
-      link.href = 'quote.html?product=bridge&item=' + encodeURIComponent('EZUP crane layout') + '&span=' + s.span +
-        '&runway=' + s.runway + '&cap=' + s.cap + '&under=' + s.under;
+      link.href = 'configure.html?type=industrial&cap=' + s.cap + '&span=' + s.span +
+        '&length=' + s.runway + '&height=' + s.under;
       if (api) api.update(s);
     }
     function place(p) {

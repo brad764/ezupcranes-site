@@ -48,3 +48,24 @@ Needs, in Cloudflare Pages > ezupcranes-site > Settings:
 - A Cloudflare Access application covering ezupcranes.com/cpq and ezupcranes.com/api/cpq
 Every API call verifies the Access token; without these settings the API refuses all requests.
 Local test: `wrangler pages dev site --kv CPQ --binding DEV_AUTH_BYPASS=1` (bypass only works on localhost).
+
+## Crane configurator (configure.html)
+Customers configure an EZUP Industrial or Professional bridge crane, jib, gantry or monorail, watch a dimensioned drawing (and optional 3D model) follow their input, and get a numbered budget quote with drawing, 3D image, scope, member sizes and terms. Every quote says it is an estimate that must be confirmed by EZUP sales management before an order.
+
+- `lib/craneDesign.js` – sizing and checks (AISC 360 ASD) for every crane type; `lib/shapes.js` holds AISC Shapes Database v15 properties
+- `lib/craneDraw.js` – the plan and elevation drawings (SVG)
+- `lib/pricing.js` – bill of materials and price (server only); `lib/geo.js` – freight distance from the site ZIP
+- `lib/quoteText.js` – the estimate disclaimer and terms printed on every quote
+- `functions/api/estimate.js` – price for the live display (no costs leave the server)
+- `functions/api/quote.js` – numbers the quote (W26-0001), emails EZUP the full cost breakdown and design checks, adds the lead to OnePageCRM with an ASAP action, and emails the customer when `MAIL_FROM` is a verified sender
+- `layout3d/configure.src.js` and `layout3d/cpq3d.src.js` – browser code, bundled to `site/assets/configure.js` and `site/assets/cpq3d.js`:
+
+    npx esbuild layout3d/configure.src.js --bundle --format=esm --minify --target=es2020 --outfile=site/assets/configure.js
+    npx esbuild layout3d/cpq3d.src.js --bundle --format=esm --minify --target=es2020 --outfile=site/assets/cpq3d.js   (needs `npm install three`)
+
+### When prices are shown
+Costs come from the CPQ price table (Prices & rules tab, stored in the `CPQ` KV namespace); new items appear there unverified.
+- On ezupcranes.com a price is shown only when every cost item it uses has been verified in the last 90 days. Otherwise the customer sees "Your budget price will be confirmed by EZUP sales management", and EZUP still gets the full breakdown by email.
+- On preview deployments (`*.pages.dev`) sample costs are shown, marked "Preview: sample costs".
+- Override with the `PUBLIC_PRICING` variable: `verified` (default), `on`, or `off`.
+Margin uses the CPQ target margin (27%, never below 20%); quotes are valid 15 days.

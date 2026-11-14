@@ -1,0 +1,109 @@
+<!-- title: Configure and Price a Crane | EZUP Crane Systems | desc: Configure an EZUP bridge crane, jib, gantry or monorail, see the drawing and 3D model update as you type, and get a budget quote. | nav: configure -->
+<section class="cfg-intro">
+<div class="wrap">
+<h1>Configure and price a crane.</h1>
+<p class="lede">Pick the crane, set the capacity and size, and watch the drawing follow. Get a budget quote with the drawing and 3D model in about a minute.</p>
+</div>
+</section>
+
+<section class="cfg" data-configurator>
+<div class="wrap cfg-grid">
+
+<form id="cfg-form" class="cfg-inputs" novalidate>
+<fieldset class="cfg-types">
+<legend>Crane</legend>
+<label class="cfg-type"><input type="radio" name="type" value="industrial"><span><strong>EZUP Industrial</strong><small>Bridge crane, to 3 t and 60 ft</small></span></label>
+<label class="cfg-type"><input type="radio" name="type" value="professional"><span><strong>EZUP Professional</strong><small>Bridge crane, to 1 t, 120 V</small></span></label>
+<label class="cfg-type"><input type="radio" name="type" value="jib"><span><strong>Jib crane</strong><small>Free-standing, 360° rotation</small></span></label>
+<label class="cfg-type"><input type="radio" name="type" value="gantry"><span><strong>Gantry crane</strong><small>Portable A-frame</small></span></label>
+<label class="cfg-type"><input type="radio" name="type" value="monorail"><span><strong>Monorail</strong><small>Straight run for a process line</small></span></label>
+</fieldset>
+
+<fieldset class="cfg-seg">
+<legend>Capacity</legend>
+<div id="cfg-caps" class="cfg-segs"></div>
+</fieldset>
+
+<div class="cfg-group">
+<div class="cfg-size" data-size="span"><div class="cfg-size-head"><label for="cfg-span-n">Span</label><span class="cfg-num"><input id="cfg-span-n" type="number" step="1" inputmode="decimal"> ft</span></div><input type="range" step="1" aria-label="Span, feet"><p class="cfg-hint"></p></div>
+<div class="cfg-size" data-size="length"><div class="cfg-size-head"><label for="cfg-length-n">Length</label><span class="cfg-num"><input id="cfg-length-n" type="number" step="1" inputmode="decimal"> ft</span></div><input type="range" step="1" aria-label="Length, feet"><p class="cfg-hint"></p></div>
+<div class="cfg-size" data-size="height"><div class="cfg-size-head"><label for="cfg-height-n">Height</label><span class="cfg-num"><input id="cfg-height-n" type="number" step="0.5" inputmode="decimal"> ft</span></div><input type="range" step="0.5" aria-label="Height, feet"><p class="cfg-hint"></p></div>
+</div>
+
+<fieldset class="cfg-seg" data-for-support>
+<legend>Support</legend>
+<div class="cfg-segs"><label><input type="radio" name="support" value="free"><span>Free-standing</span></label><label><input type="radio" name="support" value="building"><span>Hung from building steel</span></label></div>
+</fieldset>
+
+<fieldset class="cfg-seg" data-for-mobility hidden>
+<legend>Base</legend>
+<div class="cfg-segs"><label><input type="radio" name="mobility" value="casters"><span>Casters</span></label><label><input type="radio" name="mobility" value="fixed"><span>Anchored</span></label></div>
+</fieldset>
+
+<fieldset class="cfg-seg" data-for-travel>
+<legend>Trolley travel</legend>
+<div class="cfg-segs"><label><input type="radio" name="travel" value="motorized"><span>Motorized</span></label><label><input type="radio" name="travel" value="push"><span>Push by hand</span></label></div>
+</fieldset>
+
+<fieldset class="cfg-seg">
+<legend>Control</legend>
+<div class="cfg-segs"><label><input type="radio" name="control" value="radio"><span>Radio</span></label><label><input type="radio" name="control" value="pendant"><span>Pendant</span></label></div>
+</fieldset>
+
+<div class="cfg-row2">
+<div class="field" data-for-power><label for="cfg-power">Power</label>
+<select id="cfg-power"><option value="480">480 V 3-phase</option><option value="230">230 V 3-phase</option><option value="208">208 V 3-phase</option></select></div>
+<p class="cfg-hint" data-for-120v hidden>Runs on 120 V single phase.</p>
+<div class="field"><label for="cfg-zip">Site ZIP code</label><input id="cfg-zip" type="text" inputmode="numeric" autocomplete="postal-code" maxlength="5" placeholder="For freight"></div>
+</div>
+
+<fieldset class="cfg-seg">
+<legend>Installation</legend>
+<div class="cfg-segs"><label><input type="radio" name="install" value="ezup"><span>EZUP installs</span></label><label><input type="radio" name="install" value="others"><span>We'll install</span></label></div>
+</fieldset>
+<p class="cfg-hint">Tarping cranes, lifting beams and anything else: <a class="textlink" href="quote.html">send us a request</a>.</p>
+</form>
+
+<div class="cfg-out">
+<div class="cfg-viewer">
+<div class="cfg-viewer-bar">
+<div><p class="cfg-kicker" id="cfg-title">EZUP Industrial bridge crane</p><p class="cfg-sumline" id="cfg-summary"></p></div>
+<div class="cfg-toggle" role="group" aria-label="View"><button type="button" data-view="drawing" aria-pressed="true">Drawing</button><button type="button" data-view="3d" aria-pressed="false">3D</button></div>
+</div>
+<div id="cfg-drawing" class="cfg-drawing"></div>
+<p class="cfg-swipe" aria-hidden="true">Swipe for the other view</p>
+<div id="cfg-3d" class="cfg-3d" hidden></div>
+</div>
+
+<div class="cfg-result">
+<div id="cfg-price" class="cfg-price" aria-live="polite"></div>
+<div id="cfg-facts" class="cfg-facts"></div>
+<p class="cfg-disclaimer">Estimate only. Every quote must be confirmed by EZUP sales management before an order is placed.</p>
+<button type="button" class="btn btn-primary" id="cfg-get" disabled>Get my quote</button>
+<form id="cfg-contact" class="cfg-contact" hidden novalidate>
+<p class="cfg-contact-lede">Where should we send it? You'll see the quote right away.</p>
+<div class="field"><label for="q-name">Name *</label><input id="q-name" name="name" autocomplete="name" required></div>
+<div class="field"><label for="q-email">Email *</label><input id="q-email" name="email" type="email" autocomplete="email" required></div>
+<div class="field"><label for="q-company">Company</label><input id="q-company" name="company" autocomplete="organization"></div>
+<div class="field"><label for="q-phone">Phone</label><input id="q-phone" name="phone" type="tel" autocomplete="tel"></div>
+<div class="field full"><label for="q-notes">Anything we should know?</label><textarea id="q-notes" name="notes" rows="3" placeholder="What you are lifting, how often, building details"></textarea></div>
+<div class="field" style="position:absolute;left:-9999px" aria-hidden="true"><label for="q-website">Leave this empty</label><input id="q-website" name="website" tabindex="-1" autocomplete="off"></div>
+<button type="submit" class="btn btn-primary">Get my quote</button>
+</form>
+</div>
+</div>
+
+</div>
+<noscript><div class="wrap"><p>The configurator needs JavaScript. You can still <a class="textlink" href="quote.html">request a quote</a>.</p></div></noscript>
+</section>
+
+<section class="quote-wrap" id="quote-wrap" hidden>
+<div class="wrap">
+<div class="quote-bar">
+<p id="quote-status" role="status"></p>
+<div class="btn-row"><button type="button" class="btn btn-primary" id="quote-print">Print or save as PDF</button><button type="button" class="btn btn-ghost" id="quote-edit">Change the configuration</button></div>
+</div>
+<article id="quote-doc" class="quote-doc"></article>
+</div>
+</section>
+<script type="module" src="assets/configure.js"></script>

@@ -19,6 +19,7 @@ SRC, OUT = ROOT / "src", ROOT / "site"
 
 NAV = [
     ("products", "products.html", "Products"),
+    ("configure", "configure.html", "Price a Crane"),
     ("ezup", "ezup-cranes.html", "EZUP Cranes"),
     ("demag", "demag-kbk.html", "Demag &amp; KBK"),
     ("builders", "builders.html", "Builders &amp; Dealers"),
@@ -119,6 +120,8 @@ def render_img(stem, alt, cls="", sizes="(min-width: 1100px) 380px, (min-width: 
 
 
 def quote_href(item):
+    if item["id"] in products.CONFIGURE:
+        return f'configure.html?type={products.CONFIGURE[item["id"]]}'
     return f'quote.html?product={item["quote"]}&amp;item={urlquote(item["name"])}'
 
 
@@ -132,7 +135,7 @@ def product_cards(group_id):
         bullets = f"<ul>{bullets}</ul>" if bullets else ""
         links = []
         if it.get("quote"):
-            links.append(f'<a class="textlink" href="{quote_href(it)}">Request a quote<span class="sr"> for {escape(it["name"])}</span></a>')
+            links.append(f'<a class="textlink" href="{quote_href(it)}">{"Price it online" if it["id"] in products.CONFIGURE else "Request a quote"}<span class="sr"> for {escape(it["name"])}</span></a>')
         if it.get("link"):
             links.append(f'<a class="textlink" href="{it["link"][1]}">{escape(it["link"][0])}</a>')
         out.append(f'<article class="prod" id="{it["id"]}">{render_img(it["img"], it["alt"], "prod-img", sizes)}'
@@ -152,7 +155,7 @@ def lineup():
             btns.append(f'<button type="button" id="lu-tab-{it["id"]}" data-lu="{it["id"]}" aria-selected="{sel}">{escape(it["name"])}</button>')
             links = []
             if it.get("quote"):
-                links.append(f'<a class="btn btn-primary" href="{quote_href(it)}">Request a quote<span class="sr"> for {escape(it["name"])}</span></a>')
+                links.append(f'<a class="btn btn-primary" href="{quote_href(it)}">{"Price it online" if it["id"] in products.CONFIGURE else "Request a quote"}<span class="sr"> for {escape(it["name"])}</span></a>')
             if it.get("link"):
                 cls = "textlink" if it.get("quote") else "btn btn-primary"
                 links.append(f'<a class="{cls}" href="{it["link"][1]}">{escape(it["link"][0])}</a>')
