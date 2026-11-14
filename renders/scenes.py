@@ -37,19 +37,19 @@ def _nameplate(m, tex, loc, normal, h=0.11):
 # ============================================================ EZUP
 def ezup_industrial(m):
     S, L, H = 24 * FT, 30 * FT, 12 * FT
-    runway(S, L, H, m, bays=2)
+    runway(S, L, H, m, bays=2, beam=(10.2 * IN, 5.75 * IN, 0.36 * IN, 0.24 * IN), col=6 * IN, plate=14 * IN)
     yb = -L / 2 + 2.3
     xt = -1.1
-    o, bowl, g = ezup_bridge(S, yb, H, m, xt=xt, drop=1.45, near=-1, panel_end=1)
+    o, bowl, g = ezup_bridge(S, yb, H, m, girder=(14.0, 6.75, 0.455, 0.285), xt=xt, drop=1.45, near=-1, panel_end=1)
     conductor_bars((S / 2 + 0.0825, -L / 2 - 0.1, H - 0.25), (S / 2 + 0.0825, L / 2 + 0.1, H - 0.25), (1, 0, 0), m, every=1.5)
     c = crate(m, (1.1, 0.8, 0.75))
     place(c, (xt + 0.04, yb, 0.55), 0.0, 'crate')
     top = 0.55 + 0.77
     sling_legs(bowl, [(xt + 0.04 + sx * 0.45, yb + sy * 0.3, top) for sx in (-1, 1) for sy in (-1, 1)], m, r=0.008)
     place(pallet(m), (xt + 0.04, yb, 0), 0.0, 'pallet')
-    tube, gh, gs, gw = 6 * IN, 14 * IN, 30 * IN, 4 * IN
+    tube, gh, gs, gw = 6 * IN, 14.0 * IN, 30 * IN, 6.75 * IN
     gz0 = H + 0.035 + tube
-    ztop = gz0 + gh + 0.012
+    ztop = gz0 + gh
     yface = yb - gs / 2 - gw / 2
     marks = {
         'span_a': (-S / 2, yb - gs / 2, ztop + 1.30), 'span_b': (S / 2, yb - gs / 2, ztop + 1.30),
@@ -82,10 +82,10 @@ def ezup_trolley_detail(m):
 
 def ezup_professional(m):
     S, L, H = 16 * FT, 18 * FT, 10 * FT
-    runway(S, L, H, m, bays=1, beam=(0.21, 0.134, 0.0102, 0.0062), col=6 * IN, plate=16 * IN)
+    runway(S, L, H, m, bays=1, beam=(8.14 * IN, 5.25 * IN, 0.33 * IN, 0.23 * IN), col=4 * IN, plate=12 * IN)
     yb = -L / 2 + 1.7
     xt = 0.25
-    o, bowl, g = ezup_bridge(S, yb, H, m, gs=24 * IN, girder=(3 * IN, 9 * IN), xt=xt, drop=1.15, plate='nameplate-1ton.png',
+    o, bowl, g = ezup_bridge(S, yb, H, m, gs=24 * IN, girder=(8.11, 4.02, 0.315, 0.245), xt=xt, drop=1.15, plate='nameplate-1ton.png',
                              near=-1, hoist_scale=0.72, Lt=1.2, tube=5 * IN, cbars=False, panel_end=1,
                              box_size=(0.30, 0.16, 0.40), pendant=1.55, plate_x=1.05, hang_drop=0.30)
     place(workbench(m), (xt + 0.03, yb, 0), 0.0, 'bench')
@@ -131,12 +131,12 @@ def component_kit(m):
 
 def runway_tiebacks(m):
     S, L, H = 22 * FT, 30 * FT, 12 * FT
-    rw = runway(S, L, H, m, bays=2)
+    rw = runway(S, L, H, m, bays=2, beam=(10.2 * IN, 5.75 * IN, 0.36 * IN, 0.24 * IN), col=6 * IN, plate=14 * IN)
     kit.bpy.context.view_layer.update()
     for ob in rw:                       # keep only the runway line next to the building
         if ob.matrix_world.translation.x < 0 or (ob.type == 'MESH' and sum((ob.matrix_world @ Vector(c)).x for c in ob.bound_box) / 8 < 0):
             kit.bpy.data.objects.remove(ob)
-    ezup_bridge(S, -0.6, H, m, xt=1.3, drop=1.5, near=-1, panel_end=1, plate_x=-0.2)
+    ezup_bridge(S, -0.6, H, m, girder=(8.06, 6.54, 0.465, 0.285), xt=1.3, drop=1.5, near=-1, panel_end=1, plate_x=-0.2)
     conductor_bars((S / 2 - 0.0825, -L / 2 - 0.1, H - 0.25), (S / 2 - 0.0825, L / 2 + 0.1, H - 0.25), (-1, 0, 0), m, every=1.5)
     xb = S / 2 + 1.25
     dcol = 0.26
@@ -373,9 +373,9 @@ def _tarp(m, y0, y1, zbar, drop=1.9, rb=0.07, color=None):
 
 def tarping_crane(m):
     S, L, H = 5.8, 17.0, 7.0
-    runway(S, L, H, m, bays=3, col=10 * IN, plate=26 * IN, beam=(0.36, 0.171, 0.0116, 0.0072))
+    runway(S, L, H, m, bays=3, col=8 * IN, plate=16 * IN, beam=(12.2 * IN, 6.49 * IN, 0.38 * IN, 0.23 * IN))
     yb = 0.6
-    o, bowl, g = ezup_bridge(S, yb, H, m, xt=0.0, drop=0.35, near=-1, panel_end=1, plate_x=1.1)
+    o, bowl, g = ezup_bridge(S, yb, H, m, girder=(8.28, 5.27, 0.40, 0.25), xt=0.0, drop=0.35, near=-1, panel_end=1, plate_x=1.1, plate='nameplate-2ton.png')
     conductor_bars((S / 2 + 0.0855, -L / 2 - 0.1, H - 0.28), (S / 2 + 0.0855, L / 2 + 0.1, H - 0.28), (1, 0, 0), m, every=1.5)
     # spreader bar along the trailer, hung from the hook
     zs = bowl.z - 1.0
@@ -487,7 +487,6 @@ def monorail(m):
     for y in ys:
         for sx in (-1, 1):
             base_column(sx * XC, y, H, m, size=6 * IN, plate=20 * IN, gussets=True)
-            knee((sx * (XC - 3 * IN), y, H - 0.75), (sx * (XC - 3 * IN - 0.75), y, H), m, plane_n=(0, 1, 0))
         member('header', P_I(hd, 0.147, 0.0112, 0.0066), (-XC - 0.2, y, H + hd / 2), (XC + 0.2, y, H + hd / 2), m.gray)
         for s2 in (-1, 1):
             box('hanger_plate', (0.012, 0.16, 0.12), (s2 * (bf / 2 + 0.03), y, H - 0.05), m.gray, bevel=0.002)

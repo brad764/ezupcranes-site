@@ -235,7 +235,7 @@ def knee(p_col, p_beam, m, color=None, size=0.064, plane_n=(1, 0, 0)):
     return o
 
 
-def runway(S, L, H, m, bays=2, beam=(0.31, 0.165, 0.0097, 0.0058), col=8 * IN, plate=20 * IN, knees=True,
+def runway(S, L, H, m, bays=2, beam=(0.31, 0.165, 0.0097, 0.0058), col=8 * IN, plate=20 * IN, knees=False,
            stops=True, color=None, over=0.25):
     """Free-standing top-running runway: two lines of columns along Y at x = +/-S/2, beam tops at z = H."""
     c = color or m.gray
@@ -361,21 +361,25 @@ def ezup_trolley(xt, yb, ztop, gs, m, hang_drop=0.44):
     return o, Vector((xt, yb, hz + 0.045))
 
 
-def ezup_bridge(S, yb, H, m, gs=30 * IN, girder=(4 * IN, 14 * IN), xt=0.0, drop=1.6, plate='nameplate-3ton.png',
+def ezup_bridge(S, yb, H, m, gs=30 * IN, girder=(14.0, 6.75, 0.455, 0.285), xt=0.0, drop=1.6, plate='nameplate-3ton.png',
                 near=-1, hoist_scale=1.0, Lt=1.5, tube=6 * IN, cbars=True, panel_end=-1, control=True,
                 box_size=(0.40, 0.20, 0.50), pendant=0.0, plate_x=None, hang_drop=0.44):
     """EZUP double-girder top-running bridge on runway beams at x = +/-S/2 with tops at z = H.
     `near` is the Y side (-1 or +1) that carries the conductor bars, nameplate and control panel."""
-    gw, gh = girder
+    # girder: wide-flange beam (d, bf, tf, tw) in inches; trolley wheels run on the top flange
+    gd, gbf, gtf, gtw = girder
+    gh, gw, tw = gd * IN, gbf * IN, gtw * IN
     o = []
     for sx in (-1, 1):
         t, gz0 = ezup_end_truck(sx * S / 2, yb, H, m, Lt, tube, inward=-sx)
         o += t
-    ztop = gz0 + gh + 0.012
+    ztop = gz0 + gh
     for e in (-1, 1):
         yg = yb + e * gs / 2
-        o.append(hss('girder', gw, gh, (-S / 2 - tube / 2 - 0.02, yg, gz0 + gh / 2), (S / 2 + tube / 2 + 0.02, yg, gz0 + gh / 2), m.yellow, r=0.012))
-        o.append(box('rail', (S + tube - 0.05, 0.05, 0.012), (0, yg, gz0 + gh), m.zinc, anchor='b', bevel=0.002))
+        o.append(member('girder', P_I(gh, gw, gtf * IN, tw), (-S / 2 - tube / 2 - 0.02, yg, gz0 + gh / 2), (S / 2 + tube / 2 + 0.02, yg, gz0 + gh / 2), m.yellow))
+        # end plates on the girder ends
+        for sx2 in (-1, 1):
+            o.append(box('girder_end', (0.012, gw, gh), (sx2 * (S / 2 + tube / 2 + 0.026), yg, gz0 + gh / 2), m.yellow, bevel=0.002))
         for sx in (-1, 1):
             xs = sx * S / 2
             # trolley end stop posts on the end truck, outboard of each girder
@@ -390,7 +394,7 @@ def ezup_bridge(S, yb, H, m, gs=30 * IN, girder=(4 * IN, 14 * IN), xt=0.0, drop=
                     o.append(bolt((xs + bx, yc + s2 * 0.004, gz0 + 0.05), (0, s2, 0), d=0.014, material=m.yellow, stick=0.006))
                     o.append(bolt((xs + bx, yc + s2 * 0.035, gz0 + 0.008), (0, 0, 1), d=0.014, material=m.yellow, stick=0.006))
             # trolley stop bumpers on the rail ends
-            o.append(box('rail_stop', (0.03, 0.06, 0.07), (sx * (S / 2 - tube / 2 - 0.01), yg, gz0 + gh + 0.012), m.yellow, anchor='b', bevel=0.003))
+            o.append(box('rail_stop', (0.03, 0.06, 0.07), (sx * (S / 2 - tube / 2 - 0.01), yg, gz0 + gh), m.yellow, anchor='b', bevel=0.003))
     tr, hang = ezup_trolley(xt, yb, ztop, gs, m, hang_drop=hang_drop)
     o += tr
     g, bowl = chain_hoist(m, drop=drop, s=hoist_scale, pendant=pendant)
@@ -413,10 +417,10 @@ def ezup_bridge(S, yb, H, m, gs=30 * IN, girder=(4 * IN, 14 * IN), xt=0.0, drop=
             o.append(box('coll_shoe', (0.07, 0.03, 0.022), (xt + 0.12, ya - near * 0.02, z0 + i * 0.034), m.black, bevel=0.003))
     if plate:
         pm = image_mat('plate_' + plate, os.path.join(TEX, plate), rough=0.3)
-        ph = min(0.15, gh * 0.5)
+        ph = min(0.15, (gh - 2 * gtf * IN) * 0.8)
         pw = ph * 4.3
         px = plate_x if plate_x is not None else panel_end * (S / 2 - 2.2)
-        o.append(plane('nameplate', pw, ph, pm, (px, yface + near * 0.0015, gz0 + gh - ph / 2 - 0.02), normal=nrm))
+        o.append(plane('nameplate', pw, ph, pm, (px, yb + near * (gs / 2 + tw / 2 + 0.0015), gz0 + gh / 2), normal=nrm))
     if control:
         cb = control_box(m, size=box_size)
         e = join(cb, 'control')
