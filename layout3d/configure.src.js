@@ -72,12 +72,14 @@ function applyControls(d) {
   setupRange("height", T.height, d.inputs.height, t);
   show("[data-for-support]", t === "industrial" || t === "professional" || t === "monorail");
   show("[data-for-mobility]", t === "gantry");
+  show("[data-for-cable]", t === "jib" || t === "gantry");
   show("[data-for-travel]", t !== "industrial");
   show("[data-for-power]", t !== "professional");
   show("[data-for-120v]", t === "professional");
   const setRadio = (name, v) => $$(`input[name="${name}"]`).forEach(r => { r.checked = r.value === String(v); });
   setRadio("support", d.inputs.support);
   setRadio("mobility", d.inputs.mobility || "casters");
+  setRadio("cable", d.inputs.cable || "festoon");
   setRadio("travel", d.inputs.travel);
   setRadio("control", d.inputs.control);
   setRadio("install", d.inputs.install);
@@ -88,7 +90,7 @@ function applyControls(d) {
 function readForm() {
   const fd = new FormData(form);
   const s = {};
-  for (const k of ["type", "cap", "support", "mobility", "travel", "control", "install"]) if (fd.get(k) != null) s[k] = fd.get(k);
+  for (const k of ["type", "cap", "support", "mobility", "cable", "travel", "control", "install"]) if (fd.get(k) != null) s[k] = fd.get(k);
   for (const k of ["span", "length", "height"]) {
     const row = $(`[data-size="${k}"]`);
     if (row && !row.hidden) s[k] = $('input[type="number"]', row).value;
