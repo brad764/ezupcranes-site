@@ -601,6 +601,111 @@ def family(m):
     return dict(az=-84, el=11, lens=70, margin=1.03)
 
 
+# ============================================================ wall jibs
+def _building_bay(m, H_col, half=2.4, d=0.353, bf=0.204, tf=0.0151, tw=0.0087):
+    """Building column (W14x48) with its flange facing +X, siding behind it and a roof beam stub."""
+    xc = -d / 2
+    member('bldg_col', P_I(d, bf, tf, tw), (xc, 0, 0), (xc, 0, H_col), m.primer, up=(1, 0, 0))
+    box('col_base', (0.42, 0.42, 0.025), (xc, 0, 0), m.gray, anchor='b', bevel=0.002)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            bolt((xc + sx * 0.15, sy * 0.15, 0.025), d=0.022, material=m.zinc, stick=0.03)
+    member('roof_beam', P_I(0.41, 0.18, 0.016, 0.0095), (xc, -half, H_col + 0.205), (xc, half, H_col + 0.205), m.primer)
+    side = mat('siding', '#D6D8D3', rough=0.6, metal=0.15)
+    xw = -d - 0.04
+    box('siding', (0.02, 2 * half, H_col + 0.41), (xw, 0, 0), side, anchor='b', bevel=0.0)
+    for y in [i * 0.305 - half + 0.15 for i in range(int(2 * half / 0.305))]:
+        box('rib', (0.03, 0.035, H_col + 0.41), (xw + 0.02, y, 0), side, anchor='b', bevel=0.004)
+    box('girt', (0.08, 2 * half, 0.2), (xw + 0.06, 0, 2.6), m.gray, anchor='b', bevel=0.002)
+    return 0.0  # x of the column face
+
+
+def _hinge_bracket(m, z, xp, w=0.30, t=0.04):
+    box('hinge_plate', (0.36, 0.40, 0.02), (0.01, 0, z), m.gray, bevel=0.002, rot=(0, math.radians(90), 0))
+    for sy in (-1, 1):
+        box('hinge_arm', (xp + 0.04, t * 0.5, 0.16), (xp / 2 + 0.02, sy * (w / 2 - 0.02), z), m.gray, bevel=0.002)
+    cyl('hinge_pin', 0.03, w + 0.04, (xp, 0, z), m.zinc, axis='y', bevel=0.003)
+    for sy in (-1, 1):
+        for sz in (-1, 1):
+            bolt((0.02, sy * 0.15, z + sz * 0.13), (1, 0, 0), d=0.022, material=m.zinc, stick=0.02)
+
+
+def jib_wall(m, arrows=False):
+    R, H = 14 * FT, 12 * FT
+    d, bf, tf, tw = 12.3 * IN, 6.52 * IN, 0.44 * IN, 0.26 * IN      # W12x30
+    pb, pl, hs = 10 * IN, 60 * IN, 42 * IN                           # HSS10x10 post, hinge spacing
+    _building_bay(m, 6.1)
+    xp = 0.10 + pb / 2
+    hss('pivot_post', pb, pb, (xp, 0, H), (xp, 0, H + pl), m.yellow)
+    box('post_cap', (pb + 0.02, pb + 0.02, 0.02), (xp, 0, H + pl), m.yellow, anchor='b', bevel=0.002)
+    for z in (H + d / 2, H + d / 2 + hs):
+        _hinge_bracket(m, z, xp)
+    x0 = xp + pb / 2
+    member('boom', P_I(d, bf, tf, tw), (x0, 0, H + d / 2), (R, 0, H + d / 2), m.yellow)
+    k = 0.95
+    hss('brace', 4 * IN, 4 * IN, (x0, 0, H + d + k), (x0 + k, 0, H + d + 0.02), m.yellow)
+    for sy in (-1, 1):
+        prism('gusset', [(x0, H), (x0 + 0.42, H + d), (x0, H + d)], 0.012, m.yellow).matrix_world = Matrix.Translation((0, sy * (bf / 2 - 0.006) - 0.006, 0))
+    box('boom_endplate', (0.014, bf + 0.02, d + 0.02), (R + 0.007, 0, H + d / 2), m.yellow, bevel=0.002)
+    box('boom_stop', (0.02, bf - 0.03, 0.12), (R - 0.12, 0, H), m.yellow, anchor='b', bevel=0.002)
+    _nameplate(m, 'nameplate-2ton.png', (1.55, -tw / 2 - 0.002, H + d / 2), (0, -1, 0), h=0.11)
+    xh = 2.95
+    bowl = hoist_on_beam(m, (xh, 0, H), bf, rz=0.0, s=1.0, drop=1.30, motor=True, pendant=1.8)
+    c = crate(m, (1.0, 0.8, 0.7))
+    place(c, (xh + 0.04, 0, 0.55), 0.0, 'crate')
+    sling_legs(bowl, [(xh + 0.04 + sx * 0.42, sy * 0.3, 0.55 + 0.72) for sx in (-1, 1) for sy in (-1, 1)], m, r=0.008)
+    place(pallet(m), (xh + 0.04, 0, 0), 0.0, 'pallet')
+    if arrows:
+        red = mat('arrow_red', '#C93A3A', rough=0.4)
+        blue = mat('arrow_blue', '#1F4E8C', rough=0.4)
+        for z, sgn, mt in ((H + d / 2 + hs, 1, red), (H + d / 2, -1, blue)):
+            a0, a1 = (0.55 if sgn > 0 else 1.25), (1.25 if sgn > 0 else 0.55)
+            y = -0.55
+            cyl('arrow_shaft', 0.03, 0.62, ((a0 + a1) / 2 - sgn * 0.05, y, z), mt, axis='x', bevel=0.0)
+            cone = cyl('arrow_head', 0.075, 0.16, (a1, y, z), mt, axis='x', bevel=0.0, r2=0.0)
+            if sgn < 0:
+                cone.rotation_euler = (0, -math.pi / 2, 0)
+        return dict(az=-58, el=6, lens=60, pts=[(-0.6, -1.2, H - 1.4), (2.0, 0.8, H + pl + 0.5)])
+    return dict(az=-62, el=8, lens=70)
+
+
+def jib_rod(m):
+    R, H = 20 * FT, 12 * FT
+    d, bf, tf, tw = 8.14 * IN, 5.25 * IN, 0.33 * IN, 0.23 * IN       # W8x18
+    a, hr, rr = 234 * IN, 72 * IN, 0.75 * IN / 2
+    _building_bay(m, 6.7, half=2.6)
+    zb = H + d / 2
+    _hinge_bracket(m, zb, 0.12, w=0.22)
+    zr = zb + hr
+    box('rod_bracket', (0.30, 0.10, 0.18), (0.13, 0, zr), m.gray, bevel=0.003)
+    for sy in (-1, 1):
+        for sz in (-1, 1):
+            bolt((0.02, sy * 0.13, zr + sz * 0.11), (1, 0, 0), d=0.02, material=m.zinc, stick=0.02)
+    member('boom', P_I(d, bf, tf, tw), (0.10, 0, zb), (R, 0, zb), m.yellow)
+    p0, p1 = Vector((0.25, 0, zr)), Vector((a, 0, H + d + 0.05))
+    mid = p0.lerp(p1, 0.38)
+    cyl_between = lambda nm, A, B, r, mt: member(nm, P_circle(r, 20), A, B, mt, up=(0, 0, 1), bevel=0.0)
+    cyl_between('tie_rod', p0, p1, rr, m.dsteel)
+    dvec = (p1 - p0).normalized()
+    cyl_between('turnbuckle', mid - dvec * 0.16, mid + dvec * 0.16, rr * 2.4, m.zinc)
+    for q in (p0, p1):
+        cyl_between('clevis', q - dvec * 0.02, q + dvec * 0.11 * (1 if q is p0 else -1), 0.022, m.zinc)
+    box('rod_lug', (0.12, 0.02, 0.09), (a, 0, H + d), m.yellow, anchor='b', bevel=0.002)
+    box('boom_endplate', (0.014, bf + 0.02, d + 0.02), (R + 0.007, 0, zb), m.yellow, bevel=0.002)
+    box('boom_stop', (0.02, bf - 0.03, 0.10), (R - 0.12, 0, H), m.yellow, anchor='b', bevel=0.002)
+    _nameplate(m, 'nameplate-1ton.png', (2.1, -tw / 2 - 0.002, zb), (0, -1, 0), h=0.085)
+    xh = 4.3
+    bowl = hoist_on_beam(m, (xh, 0, H), bf, rz=0.0, s=0.82, drop=1.75, motor=True, pendant=1.7)
+    place(workbench(m), (xh + 0.03, 0, 0), 0.0, 'bench')
+    gp, eye = gear_part(m, 0.9)
+    place(gp, (xh + 0.03, 0, bowl.z - eye.z - 0.02), 0.0, 'part')
+    return dict(az=-60, el=8, lens=70)
+
+
+def building_check(m):
+    return jib_wall(m, arrows=True)
+
+
 ALL = [ezup_industrial, ezup_end_truck_detail, ezup_trolley_detail, ezup_professional, component_kit, runway_tiebacks, kbk_workstation, kbk_monorail, kbk_jib,
-       chain_hoist_closeup, tarping_crane, jib_crane, gantry_crane, monorail, lifting_beam, controls, kbk_detail, family]
+       chain_hoist_closeup, tarping_crane, jib_crane, gantry_crane, monorail, lifting_beam, controls, kbk_detail, family, jib_wall, jib_rod, building_check]
 SCENES = {f.__name__: f for f in ALL}

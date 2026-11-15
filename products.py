@@ -11,6 +11,7 @@ CONFIGURE = {"industrial": "industrial", "professional": "professional", "jib": 
 QUOTE_OPTIONS = {
     "bridge": "Workstation / bridge crane", "monorail": "Monorail", "jib": "Jib crane", "gantry": "Gantry crane",
     "tarping": "Tarping crane", "beam": "Lifting beam or spreader", "hoist": "Hoist only", "upgrade": "Upgrade or retrofit",
+    "engineering": "Building structure evaluation",
 }
 
 GROUPS = [
@@ -35,6 +36,26 @@ GROUPS = [
              "text": "Bracing kits that stiffen free-standing runways against crane travel loads.",
              "fact": "For free-standing runways", "img": "runway-tiebacks", "quote": "bridge",
              "alt": "Rendering of a free-standing crane runway tied back to building columns with yellow struts"},
+        ],
+    },
+    {
+        "id": "jibs", "family": "EZUP jib cranes", "title": "Jib cranes",
+        "items": [
+            {"id": "jib-free", "name": "Free-standing jib crane",
+             "text": "A pillar mast on its own foundation, placed anywhere on the floor.",
+             "bullets": ["1/4 to 3 t, reach to 20 ft", "360° rotation", "Foundation designed for your slab and soil", "Demag DC-Com or DC-Pro hoist"],
+             "fact": "1/4 to 3 t, reach to 20 ft, 360°", "img": "jib-crane", "quote": "jib", "cfg": "type=jib&amp;jib=free",
+             "alt": "Rendering of a free-standing jib crane with a yellow mast and boom lifting steel plate"},
+            {"id": "jib-wall", "name": "Wall cantilever jib crane",
+             "text": "A boom on a hinged post that bolts to a building column. No foundation, low headroom.",
+             "bullets": ["1/4 to 3 t, reach to 20 ft", "180° rotation", "Mounts to your building column", "Demag DC-Com or DC-Pro hoist"],
+             "fact": "1/4 to 3 t, reach to 20 ft, 180°", "img": "jib-wall", "quote": "jib", "cfg": "type=jib&amp;jib=wall",
+             "alt": "Rendering of a wall cantilever jib crane on a building column lifting a crate"},
+            {"id": "jib-rod", "name": "Wall tie-rod jib crane",
+             "text": "A boom carried by a tie rod to a building column: the lightest boom and the longest reach.",
+             "bullets": ["1/4 to 3 t, reach to 30 ft", "180° rotation", "Needs column height above the boom", "Demag DC-Com or DC-Pro hoist"],
+             "fact": "1/4 to 3 t, reach to 30 ft, 180°", "img": "jib-rod", "quote": "jib", "cfg": "type=jib&amp;jib=rod",
+             "alt": "Rendering of a wall tie-rod jib crane on a building column lifting a gearbox from a workbench"},
         ],
     },
     {
@@ -65,10 +86,10 @@ GROUPS = [
              "text": "Radio-controlled cranes that place tarps on flatbed trailers so nobody climbs on the load. Indoors or free-standing outdoors.",
              "fact": "Quoted per project", "img": "tarping-crane", "quote": "tarping",
              "alt": "Rendering of a tarping crane lowering a tarp on a spreader bar over a flatbed trailer loaded with lumber"},
-            {"id": "jib", "name": "Jib cranes",
-             "text": "Heavy jibs beyond the KBK range, designed for your column, wall or foundation.",
-             "fact": "Quoted per project", "img": "jib-crane", "quote": "jib",
-             "alt": "Rendering of a free-standing jib crane with a yellow mast and boom lifting steel plate"},
+            {"id": "building-check", "name": "Building structure evaluation",
+             "text": "Our licensed professional engineer visits your site and determines whether your building, floor slab or foundation can carry any of our crane systems, and designs the reinforcement if it needs it.",
+             "fact": "Site visit and PE-stamped report", "img": "building-check", "quote": "engineering",
+             "alt": "Rendering of a wall jib crane on a building column, with red and blue arrows showing the forces its brackets put into the column"},
             {"id": "gantry", "name": "Gantry cranes",
              "text": "Fixed or mobile gantries built to your span, height and capacity.",
              "fact": "Quoted per project", "img": "gantry-crane", "quote": "gantry",

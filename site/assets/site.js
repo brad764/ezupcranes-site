@@ -149,7 +149,7 @@
     if (!sel || !window.URLSearchParams) return;
     var q = new URLSearchParams(window.location.search);
     var map = { bridge: 'Workstation / bridge crane', monorail: 'Monorail', jib: 'Jib crane', gantry: 'Gantry crane',
-                tarping: 'Tarping crane', beam: 'Lifting beam or spreader', hoist: 'Hoist only', upgrade: 'Upgrade or retrofit' };
+                tarping: 'Tarping crane', beam: 'Lifting beam or spreader', hoist: 'Hoist only', upgrade: 'Upgrade or retrofit', engineering: 'Building structure evaluation' };
     var want = map[q.get('product')];
     if (want) {
       [].forEach.call(sel.options, function (o) { if (o.text === want) sel.value = o.value || o.text; });
