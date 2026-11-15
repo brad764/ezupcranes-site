@@ -499,8 +499,10 @@ def monorail(m):
     member('mono_beam', P_I(d, bf, 0.0138, 0.009), (0, -Lb / 2, zt - d / 2), (0, Lb / 2, zt - d / 2), m.yellow)
     for sy in (-1, 1):
         box('end_stop', (bf + 0.03, 0.02, d * 0.5), (0, sy * (Lb / 2 - 0.1), zt - d - 0.0 + d * 0.25), m.yellow, bevel=0.002)
-    _nameplate(m, 'nameplate-2ton.png', (bf / 2 - 0.057, -2.3, zt - d / 2), (1, 0, 0), h=0.105).matrix_world.translation.x = 0.0048
+    _nameplate(m, 'nameplate-2ton.png', (bf / 2 - 0.057, -2.3, zt - d + 0.225), (1, 0, 0), h=0.095).matrix_world.translation.x = 0.0048
     zf = zt - d
+    # Conductix SafeLec 2 conductor bar on brackets off the web, low and clear of the trolley side plates
+    conductor_bars((0.0045, -Lb / 2 + 0.25, zf + 0.03), (0.0045, Lb / 2 - 0.25, zf + 0.03), (1, 0, 0), m, pitch=0.026, standoff=0.11, every=1.3)
     # process tanks
     for y, col in ((-0.4, '#27506B'), (2.4, '#3C6B4A')):
         place(tank(m, (1.5, 2.0, 1.0), liquid=col), (0, y, 0), 0.0, 'tank')
