@@ -10,7 +10,7 @@ NAMES = {
     'chain_hoist_closeup': 'chain-hoist', 'tarping_crane': 'tarping-crane', 'jib_crane': 'jib-crane', 'gantry_crane': 'gantry-crane',
     'monorail': 'monorail', 'lifting_beam': 'lifting-beam', 'controls': 'controls', 'ezup_end_truck_detail': 'ezup-end-truck',
     'ezup_trolley_detail': 'ezup-trolley', 'kbk_detail': 'kbk-detail',
-    'jib_wall': 'jib-wall', 'jib_rod': 'jib-rod', 'building_check': 'building-check',
+    'jib_wall': 'jib-wall', 'jib_rod': 'jib-rod', 'building_check': 'building-check', 'jib_mast': 'jib-mast',
 }
 def main(todo):
   os.makedirs(DST, exist_ok=True)

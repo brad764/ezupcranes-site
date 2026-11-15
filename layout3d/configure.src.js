@@ -66,10 +66,11 @@ function show(sel, on) { $$(sel).forEach(el => { el.hidden = !on; }); }
 
 const JIB_HINT = {
   free: "Pillar mast on its own foundation. 360° rotation, place it anywhere on the floor.",
+  mast: "Mast turns in a floor bearing and a top bearing on your overhead steel. 360° rotation, no special foundation.",
   wall: "Boom on a hinged post that bolts to a building column. 180° rotation, no foundation, low headroom.",
   rod: "Boom hung from a tie rod to a building column. 180° rotation, lightest boom, longest reach; needs column height above the boom."
 };
-const JIB_SPAN_HINT = { free: "Mast centre to the end of the boom", wall: "Column face to the end of the boom", rod: "Column face to the end of the boom" };
+const JIB_SPAN_HINT = { free: "Mast centre to the end of the boom", mast: "Mast centre to the end of the boom", wall: "Column face to the end of the boom", rod: "Column face to the end of the boom" };
 
 function applyControls(d) {
   const t = d.inputs.type, T = t === "jib" ? { ...TYPES.jib, ...JIB_STYLES[d.inputs.jib || "free"] } : TYPES[t];

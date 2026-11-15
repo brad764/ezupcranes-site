@@ -234,8 +234,32 @@ export function mount(host, opts) {
     return g;
   }
 
+  function buildMastJib(G) {
+    const g = new Group();
+    const R = G.reach * FT, H = G.underBoomIn * IN, bd = G.boom.d * IN, bf = G.boom.bf * IN;
+    const mb = G.mast.B * IN, Hm = G.mast.hIn * IN;
+    plateAt(g, 0, 0, mb + 0.3);
+    box(g, mb + 0.1, 0.12, mb + 0.1, 0, 0.085, 0, M.gray);                  // bottom bearing
+    box(g, mb, Hm - 0.25, mb, 0, (Hm - 0.25) / 2 + 0.14, 0, M.yellow);       // mast
+    box(g, mb + 0.1, 0.14, mb + 0.1, 0, Hm - 0.05, 0, M.gray);              // top bearing
+    // overhead steel (by others): a beam across the top with a bracket down to the bearing
+    const ob = 0.4, oy = Hm + 0.25;
+    box(g, 0.18, 0.016, 3.0, 0, oy + ob, 0, M.gray); box(g, 0.18, 0.016, 3.0, 0, oy, 0, M.gray); box(g, 0.01, ob, 3.0, 0, oy + ob / 2, 0, M.gray);
+    box(g, 0.2, oy - Hm + 0.02, 0.2, 0, (oy + Hm) / 2, 0, M.gray);
+    ibeamX(g, bd, bf, R - mb / 2, (R + mb / 2) / 2, H + bd, 0, M.yellow);
+    const k = Math.min(R * 0.3, 0.9);
+    const br = box(g, k * Math.SQRT2, 0.07, 0.07, mb / 2 + k / 2, H - k / 2, 0, M.yellow);
+    br.rotation.z = Math.PI / 4;
+    box(g, 0.02, bd + 0.02, bf + 0.02, R, H + bd / 2, 0, M.yellow);
+    const xt = R * 0.72;
+    box(g, 0.3, 0.1, bf + 0.08, xt, H - 0.05, 0, M.red);
+    hoist(g, xt, H - 0.1, 0, G.hookIn * IN, 0.8, true);
+    return g;
+  }
+
   function buildJib(G) {
     if (G.style === 'wall' || G.style === 'rod') return buildWallJib(G);
+    if (G.style === 'mast') return buildMastJib(G);
     const g = new Group();
     const R = G.reach * FT, H = G.underBoomIn * IN, od = G.mast.OD * IN, mh = G.mast.hIn * IN, bd = G.boom.d * IN, bf = G.boom.bf * IN;
     plateAt(g, 0, 0, G.basePlate * IN);

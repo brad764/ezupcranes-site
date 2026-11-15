@@ -702,10 +702,52 @@ def jib_rod(m):
     return dict(az=-60, el=8, lens=70)
 
 
+def jib_mast(m):
+    R, H = 14 * FT, 12 * FT
+    d, bf, tf, tw = 13.9 * IN, 5.03 * IN, 0.42 * IN, 0.255 * IN       # W14x26
+    mb = 10 * IN                                                     # HSS10x10 mast
+    Hm = H + d + 12 * IN
+    ycol = 2.9
+    zb = Hm + 0.10                                                   # underside of the overhead beam
+    for y in (-ycol, ycol):
+        member('bldg_col', P_I(0.353, 0.204, 0.0151, 0.0087), (0, y, 0), (0, y, zb + 0.41), m.primer, up=(1, 0, 0))
+        box('col_base', (0.42, 0.42, 0.025), (0, y, 0), m.gray, anchor='b', bevel=0.002)
+    member('roof_beam', P_I(0.41, 0.18, 0.016, 0.0095), (0, -ycol - 0.1, zb + 0.205), (0, ycol + 0.1, zb + 0.205), m.primer)
+    side = mat('siding', '#D6D8D3', rough=0.6, metal=0.15)
+    box('siding', (0.02, 2 * ycol + 1.4, zb + 0.6), (-0.75, 0, 0), side, anchor='b', bevel=0.0)
+    for y in [i * 0.305 - ycol - 0.55 for i in range(int((2 * ycol + 1.2) / 0.305))]:
+        box('rib', (0.03, 0.035, zb + 0.6), (-0.73, y, 0), side, anchor='b', bevel=0.004)
+    # bottom bearing and base plate on the slab, mast, top bearing hung from the overhead beam
+    box('base_plate', (0.62, 0.62, 0.03), (0, 0, 0), m.yellow, anchor='b', bevel=0.003)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            bolt((sx * 0.24, sy * 0.24, 0.03), d=0.024, material=m.zinc, stick=0.035)
+    cyl('bottom_bearing', mb * 0.75, 0.16, (0, 0, 0.03 + 0.08), m.gray, bevel=0.006)
+    hss('mast', mb, mb, (0, 0, 0.19), (0, 0, Hm - 0.12), m.yellow)
+    cyl('top_bearing', mb * 0.75, 0.14, (0, 0, Hm - 0.05), m.gray, bevel=0.006)
+    box('top_bracket', (0.34, 0.34, 0.03), (0, 0, zb - 0.03), m.gray, anchor='b', bevel=0.003)
+    for sy in (-1, 1):
+        box('top_hanger', (0.30, 0.02, zb - Hm + 0.02), (0, sy * 0.15, Hm + 0.02), m.gray, anchor='b', bevel=0.002)
+    x0 = mb / 2
+    member('boom', P_I(d, bf, tf, tw), (x0, 0, H + d / 2), (R, 0, H + d / 2), m.yellow)
+    for sy in (-1, 1):
+        prism('knee', [(x0, H - 0.75), (x0 + 0.9, H), (x0, H)], 0.014, m.yellow).matrix_world = Matrix.Translation((0, sy * (tw / 2 + 0.007) - 0.007, 0))
+    box('boom_endplate', (0.014, bf + 0.02, d + 0.02), (R + 0.007, 0, H + d / 2), m.yellow, bevel=0.002)
+    box('boom_stop', (0.02, bf - 0.03, 0.12), (R - 0.12, 0, H), m.yellow, anchor='b', bevel=0.002)
+    _nameplate(m, 'nameplate-1ton.png', (1.6, -tw / 2 - 0.002, H + d / 2), (0, -1, 0), h=0.1)
+    xh = 2.95
+    bowl = hoist_on_beam(m, (xh, 0, H), bf, rz=0.0, s=0.85, drop=1.55, motor=True, pendant=1.8)
+    c = crate(m, (0.9, 0.7, 0.6))
+    place(c, (xh + 0.04, 0, 0.55), 0.0, 'crate')
+    sling_legs(bowl, [(xh + 0.04 + sx * 0.38, sy * 0.26, 0.55 + 0.62) for sx in (-1, 1) for sy in (-1, 1)], m, r=0.008)
+    place(pallet(m), (xh + 0.04, 0, 0), 0.0, 'pallet')
+    return dict(az=-60, el=8, lens=70)
+
+
 def building_check(m):
     return jib_wall(m, arrows=True)
 
 
 ALL = [ezup_industrial, ezup_end_truck_detail, ezup_trolley_detail, ezup_professional, component_kit, runway_tiebacks, kbk_workstation, kbk_monorail, kbk_jib,
-       chain_hoist_closeup, tarping_crane, jib_crane, gantry_crane, monorail, lifting_beam, controls, kbk_detail, family, jib_wall, jib_rod, building_check]
+       chain_hoist_closeup, tarping_crane, jib_crane, gantry_crane, monorail, lifting_beam, controls, kbk_detail, family, jib_wall, jib_rod, building_check, jib_mast]
 SCENES = {f.__name__: f for f in ALL}
