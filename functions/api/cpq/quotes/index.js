@@ -9,10 +9,21 @@ export const onRequestGet = handle(async ({ env }) => {
   let cursor;
   do {
     const page = await kv.list({ prefix: "quote:", cursor, limit: 1000 });
-    for (const k of page.keys) rows.push(k.metadata || { number: k.name.slice(6) });
+    for (const k of page.keys) rows.push({ source: "cpq", ...(k.metadata || { number: k.name.slice(6) }) });
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
-  rows.sort((a, b) => String(b.number).localeCompare(String(a.number)));
+  // Web estimates from the configurator (webquote:W26-0001 ...). Older records carry a shorter metadata set.
+  cursor = undefined;
+  do {
+    const page = await kv.list({ prefix: "webquote:", cursor, limit: 1000 });
+    for (const k of page.keys) {
+      const m = k.metadata || { number: k.name.slice(9) };
+      rows.push({ ...m, source: "web", status: m.status || "new", sell: m.sell ?? m.price ?? null });
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  // Newest first by date, then by number.
+  rows.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || String(b.number).localeCompare(String(a.number)));
   return json({ ok: true, quotes: rows });
 });
 

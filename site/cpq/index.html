@@ -119,12 +119,26 @@
     <details class="panel" id="q-history-wrap" hidden><summary>History</summary><ul id="q-history" class="small"></ul></details>
   </section>
 
+  <!-- WEB ESTIMATE (from the website configurator) -->
+  <section id="view-web" hidden>
+    <div class="row between"><div><span class="eyebrow">Web estimate · ezupcranes.com configurator</span><h1 id="w-title"></h1><p class="hint" id="w-sum"></p></div>
+      <div class="row"><a class="btn" href="#quotes">All quotes</a><a class="btn" id="w-open" target="_blank" rel="noopener">Open the configuration</a></div></div>
+    <div class="row">
+      <label for="w-status">Status</label>
+      <select id="w-status"><option value="new">New</option><option value="confirmed">Confirmed by sales</option><option value="sent">Sent to customer</option><option value="won">Won</option><option value="lost">Lost</option></select>
+      <button class="btn" type="button" id="w-email">Email it to me again</button>
+      <button class="btn" type="button" id="w-email-cust">Send the customer a copy</button>
+    </div>
+    <div id="w-delivery" class="stack-sm small"></div>
+    <div id="w-body" class="stack"></div>
+  </section>
+
   <!-- QUOTE LIST -->
   <section id="view-quotes" hidden>
     <div class="row between"><h1>Quotes</h1><a class="btn primary" href="#new">New quote</a></div>
     <div class="row"><label class="sr-only" for="q-search">Search quotes</label><input id="q-search" type="search" placeholder="Search by number, customer or system"></div>
     <div class="table-box"><table>
-      <thead><tr><th>Quote</th><th>Status</th><th>Customer</th><th>System</th><th class="n">Price</th><th>Date</th><th>Valid through</th><th>CRM</th></tr></thead>
+      <thead><tr><th>Quote</th><th>Status</th><th>Customer</th><th>System</th><th class="n">Price</th><th>Date</th><th>Valid through</th><th>Sent to</th></tr></thead>
       <tbody id="q-list"></tbody>
     </table></div>
   </section>

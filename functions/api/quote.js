@@ -5,7 +5,8 @@
 // materials, cost and margin, and the lead goes to OnePageCRM with an ASAP action to confirm it.
 import { evaluate, json, pricingMode } from "../../lib/webquote.js";
 import { DISCLAIMER, TERMS, PRICE_PENDING, BUILDING_OFFER } from "../../lib/quoteText.js";
-import { sendMail, crmLead, esc } from "../../lib/notify.js";
+import { crmLead } from "../../lib/notify.js";
+import { saveWeb, emailEzup, emailCustomer, stamp } from "../../lib/webquotes.js";
 import { todayIso, addDays } from "../../lib/cpq.js";
 
 const money = n => "$" + Math.round(n).toLocaleString("en-US");
@@ -36,40 +37,32 @@ export async function onRequestPost({ request, env }) {
   const link = `${origin}/configure.html?${new URLSearchParams(Object.entries(design.inputs).filter(([, v]) => v != null && v !== "")).toString()}`;
 
   const record = {
-    number, date, validThrough, customer, inputs: design.inputs, summary: design.summary, status: design.status,
-    members: design.members, checks: design.checks, scope: design.scope, warnings: design.warnings, assumptions: design.assumptions,
+    number, date, validThrough, customer, inputs: design.inputs, title: design.title, summary: design.summary, status: design.status, message: design.message || null,
+    members: design.members, checks: design.checks, worstRatio: design.worstRatio ?? null, scope: design.scope, warnings: design.warnings, assumptions: design.assumptions,
+    hoist: design.hoist || null, hookFt: design.hookFt ?? null, reactions: design.reactions || null,
     price: showPrice ? priced.sell : null, evalPrice: showPrice ? priced.evalSell || 0 : null, bldgEval: design.inputs.bldg === "yes",
     building: design.building, buildingLoads: design.buildingLoads, sampleCosts: showPrice ? !!allowed.sample : null,
-    internal: priced ? { cost: priced.cost, sell: priced.sell, margin: priced.margin, lines: priced.lines, miles: priced.miles, state: priced.state, priceWithheld: showPrice ? null : allowed.reason } : null,
-    pricingMode: pricingMode(env, request), link, createdAt: new Date().toISOString()
+    internal: priced ? { cost: priced.cost, sell: priced.sell, craneSell: priced.craneSell, evalSell: priced.evalSell, margin: priced.margin, lines: priced.lines, miles: priced.miles, state: priced.state, priceWithheld: showPrice ? null : allowed.reason } : null,
+    pricingMode: pricingMode(env, request), link, createdAt: new Date().toISOString(), workflow: "new", history: [{ at: new Date().toISOString(), event: "Created on the website" }]
   };
-  if (env.CPQ) {
-    try { await env.CPQ.put("webquote:" + number, JSON.stringify(record), { metadata: { number, date, customer: customer.company || customer.name, summary: design.summary, price: record.price } }); }
-    catch (e) { console.log("kv save failed", e); }
-  }
+  // Save first, so the quote is in the CPQ list even if email or the CRM fails.
+  if (env.CPQ) { try { await saveWeb(env.CPQ, record); } catch (e) { console.log("kv save failed", e); } }
 
-  const who = customer.company ? `${customer.name}, ${customer.company}` : customer.name;
   const crm = await crmLead(env, {
     ...customer, zip: design.inputs.zip,
     note: `Web estimate ${number} (ezupcranes.com configurator)\n${design.summary}\n` +
       (showPrice ? `Budget price shown: ${money(priced.sell)}${allowed.sample ? " (SAMPLE costs)" : ""}\n` : "Price not shown to the customer; confirm and send.\n") +
       (priced ? `Internal cost ${money(priced.cost)}, margin ${Math.round(priced.margin * 100)}%\n` : "") +
       (design.inputs.bldg === "yes" ? `Customer asked for a building structure evaluation${showPrice ? ` (${money(priced.evalSell)} included)` : ""}.\n` : (design.building && design.building.recommended ? "Building evaluation recommended but not selected; offer it.\n" : "")) +
-      `Open the configuration: ${link}` + (customer.notes ? `\n\nCustomer notes: ${customer.notes}` : ""),
+      `Open in the CPQ: ${origin}/cpq/#w/${number}\nConfiguration: ${link}` + (customer.notes ? `\n\nCustomer notes: ${customer.notes}` : ""),
     action: `Confirm web estimate ${number}: ${design.summary}`
   });
-  const internal = await sendMail(env, {
-    to: env.NOTIFY_EMAIL || "brad@ezupcranes.com", replyTo: customer.email,
-    subject: `Web estimate ${number}: ${who}, ${design.summary}`,
-    html: internalHtml(record, design, priced, allowed, crm), text: `Web estimate ${number} for ${who}\n${design.summary}\n${link}`
-  });
-  let customerMail = { ok: false, error: "MAIL_FROM not set" };
-  if (env.MAIL_FROM) {
-    customerMail = await sendMail(env, {
-      to: customer.email, replyTo: env.NOTIFY_EMAIL || "brad@ezupcranes.com",
-      subject: `Your EZUP estimate ${number}`, html: customerHtml(record, design), text: `${DISCLAIMER}\n\n${design.summary}\n${link}`
-    });
-  }
+  record.delivery = { crm: { ...stamp(crm), contactId: crm.contactId || null } };
+  const internal = await emailEzup(env, record, origin);
+  const customerMail = await emailCustomer(env, record);
+  record.delivery.ezup = stamp(internal);
+  record.delivery.customer = stamp(customerMail);
+  if (env.CPQ) { try { await saveWeb(env.CPQ, record); } catch (e) { console.log("kv save failed", e); } }
   if (!internal.ok) console.log("internal email failed:", internal.error);
   if (!crm.ok) console.log("crm failed:", crm.error);
 
@@ -100,49 +93,4 @@ async function nextNumber(env) {
   }
   const md = todayIso().slice(5).replace("-", "");
   return `W${yy}-${md}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
-}
-
-const T = 'style="font-family:Arial,sans-serif;font-size:14px;border-collapse:collapse"';
-const td = 'style="padding:4px 12px 4px 0;vertical-align:top;border-bottom:1px solid #eee"';
-const rows = pairs => pairs.filter(p => p[1] !== "" && p[1] != null).map(([k, v]) => `<tr><td ${td}><b>${esc(k)}</b></td><td ${td}>${esc(v)}</td></tr>`).join("");
-
-function internalHtml(r, d, priced, allowed, crm) {
-  const c = r.customer;
-  const sample = priced && priced.lines.some(() => true) && allowed.sample;
-  let h = `<div style="font-family:Arial,sans-serif;font-size:14px;max-width:760px">`;
-  h += `<h2 style="margin:0 0 4px">Web estimate ${esc(r.number)}</h2><p style="margin:0 0 12px;color:#555">${esc(d.summary)}</p>`;
-  if (r.pricingMode === "preview" || sample) h += `<p style="background:#FFF4CC;padding:8px 10px;margin:0 0 12px"><b>Costs used are SAMPLE values</b> from the price table, not verified costs.</p>`;
-  h += `<p style="margin:0 0 12px"><b>Building evaluation:</b> ${r.bldgEval ? `requested by the customer${r.evalPrice ? ` (${money(r.evalPrice)} of the price)` : ""}` : (r.building && r.building.recommended ? "recommended, not selected. Offer it." : "not selected.")}</p>`;
-  h += `<p style="margin:0 0 12px">${r.price != null ? `Budget price shown to the customer: <b>${money(r.price)}</b>` : `<b>No price was shown to the customer.</b> ${esc(priced ? allowed.reason : d.message || "")}`}</p>`;
-  h += `<table ${T}>${rows([["Customer", c.name], ["Company", c.company], ["Email", c.email], ["Phone", c.phone], ["Site ZIP", r.inputs.zip], ["Notes", c.notes], ["Configuration", r.link]])}</table>`;
-  if (d.status === "ok") {
-    h += `<h3>Members</h3><table ${T}>${d.members.map(m => `<tr><td ${td}>${esc(m.role)}</td><td ${td}>${esc(m.size)}</td><td ${td}>${m.qty}</td><td ${td}>${m.lengthFt ? esc(m.lengthFt + " ft") : ""}</td><td ${td}>${m.lb.toLocaleString()} lb</td></tr>`).join("")}</table>`;
-    h += `<h3>Design checks (worst ${d.worstRatio})</h3><table ${T}>${d.checks.map(k => `<tr><td ${td}>${esc(k.name)}</td><td ${td}>${esc(k.value)}</td><td ${td}>${esc(k.limit)}</td><td ${td}>${k.ratio}</td><td ${td}>${esc(k.detail || "")}</td></tr>`).join("")}</table>`;
-    if (d.reactions) h += `<p>Reactions: ${esc(Object.entries(d.reactions).map(([k, v]) => `${k} ${v}`).join(", "))}</p>`;
-    if (d.buildingLoads && d.buildingLoads.length) h += `<h3>Loads on the building</h3><table ${T}>${rows(d.buildingLoads)}</table>`;
-  }
-  if (priced) {
-    h += `<h3>Bill of materials and cost</h3><table ${T}>${priced.lines.map(l => `<tr><td ${td}>${esc(l.label)}</td><td ${td}>${l.qty} ${esc(l.unit)}</td><td ${td}>${money(l.cost)}</td><td ${td} align="right">${money(l.ext)}</td></tr>`).join("")}`;
-    h += `<tr><td ${td}><b>Cost</b></td><td ${td}></td><td ${td}></td><td ${td} align="right"><b>${money(priced.cost)}</b></td></tr>`;
-    h += `<tr><td ${td}><b>Sell at ${Math.round(priced.margin * 100)}% margin</b></td><td ${td}></td><td ${td}></td><td ${td} align="right"><b>${money(priced.sell)}</b></td></tr></table>`;
-    h += `<p style="color:#555">Freight and travel based on about ${priced.miles} mi${priced.state ? ` (${esc(priced.state)})` : " (no ZIP given, default distance)"}.</p>`;
-  }
-  if (d.warnings && d.warnings.length) h += `<h3>Warnings</h3><ul>${d.warnings.map(w => `<li>${esc(w)}</li>`).join("")}</ul>`;
-  if (d.assumptions && d.assumptions.length) h += `<h3>Assumptions</h3><ul>${d.assumptions.map(w => `<li>${esc(w)}</li>`).join("")}</ul>`;
-  h += `<p style="color:${crm.ok ? "#1E6B3A" : "#B3261E"}">${crm.ok ? "Added to OnePageCRM with a note and an ASAP action." : `NOT added to OnePageCRM: ${esc(crm.error)}`}</p>`;
-  h += `<p style="color:#555">Reply to this email to answer ${esc(c.name)} directly.</p></div>`;
-  return h;
-}
-
-function customerHtml(r, d) {
-  let h = `<div style="font-family:Arial,sans-serif;font-size:15px;max-width:640px;color:#1C1E21">`;
-  h += `<h2 style="margin:0 0 4px">EZUP estimate ${esc(r.number)}</h2><p style="margin:0 0 12px;color:#555">${esc(r.date)} · valid through ${esc(r.validThrough)}</p>`;
-  h += `<p style="background:#FFF4CC;padding:10px 12px"><b>${esc(DISCLAIMER)}</b></p>`;
-  h += `<p><b>${esc(d.summary)}</b></p><ul>${d.scope.map(s => `<li>${esc(s)}</li>`).join("")}</ul>`;
-  h += r.price != null ? `<p style="font-size:20px">Budget price: <b>${money(r.price)}</b>${r.evalPrice ? `<br><span style="font-size:14px">includes ${money(r.evalPrice)} for the building structure evaluation</span>` : ""}</p>` : `<p>${esc(PRICE_PENDING)}</p>`;
-  h += `<p><b>Engineering services.</b> ${esc(BUILDING_OFFER)}${r.bldgEval ? " You asked for this evaluation; it is included in this estimate." : ""}</p>`;
-  h += `<p><a href="${esc(r.link)}">Open your configuration, drawing and 3D model</a></p>`;
-  h += `<ul style="color:#555;font-size:13px">${TERMS.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
-  h += `<p>EZUP Crane Systems · 627 Claypool Hill Mall Road, Cedar Bluff, VA 24609 · (276) 582-1970</p></div>`;
-  return h;
 }

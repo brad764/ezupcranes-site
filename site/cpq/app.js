@@ -67,11 +67,12 @@
   async function route() {
     banner(null);
     const h = location.hash || "#quotes";
-    for (const v of ["quote", "quotes", "prices"]) $("view-" + v).hidden = true;
+    for (const v of ["quote", "quotes", "prices", "web"]) $("view-" + v).hidden = true;
     document.querySelectorAll(".tabs a").forEach(a => a.removeAttribute("aria-current"));
     if (state.dirtyPrices && h !== "#prices" && !confirmLeave()) { location.hash = "#prices"; return; }
     if (h === "#new") { tab("new"); openQuote(null); }
     else if (h.startsWith("#q/")) { tab("quotes"); await loadQuote(decodeURIComponent(h.slice(3))); }
+    else if (h.startsWith("#w/")) { tab("quotes"); await showWeb(decodeURIComponent(h.slice(3))); }
     else if (h === "#prices") { tab("prices"); showPrices(); }
     else { tab("quotes"); await showQuotes(); }
   }
@@ -87,16 +88,68 @@
   function renderList() {
     const term = $("q-search").value.trim().toLowerCase();
     const rows = state.quotes.filter(q => !term || [q.number, q.customer, q.contact, q.summary].join(" ").toLowerCase().includes(term));
-    $("q-list").innerHTML = rows.length ? rows.map(q => `<tr data-n="${esc(q.number)}" tabindex="0">
-      <td><strong>${esc(q.number)}</strong></td><td><span class="pill ${esc(q.status)}">${esc(q.status)}</span></td>
+    const sentTo = q => q.source === "web"
+      ? [q.emailOk === true ? "Email" : q.emailOk === false ? '<span class="pill stale">Email failed</span>' : "", q.crmOk ? "CRM" : q.crmOk === false ? '<span class="pill stale">CRM failed</span>' : ""].filter(Boolean).join(" · ")
+      : (q.crmDealId ? "CRM" : "");
+    $("q-list").innerHTML = rows.length ? rows.map(q => `<tr data-n="${esc(q.number)}" data-src="${esc(q.source || "cpq")}" tabindex="0">
+      <td><strong>${esc(q.number)}</strong>${q.source === "web" ? `<br><span class="pill web">web</span>` : ""}</td><td><span class="pill ${esc(q.status)}">${esc(q.status)}</span></td>
       <td>${esc(q.customer)}${q.contact && q.contact !== q.customer ? `<br><span class="hint">${esc(q.contact)}</span>` : ""}</td>
-      <td class="wrapcell">${esc(q.summary)}</td><td class="n">${money(q.sell)}</td><td>${esc(q.date || "")}</td>
-      <td>${esc(q.validThrough || "")}</td><td>${q.crmDealId ? "Sent" : ""}</td></tr>`).join("")
+      <td class="wrapcell">${esc(q.summary)}</td><td class="n">${q.sell == null ? '<span class="hint">not shown</span>' : money(q.sell)}</td><td>${esc(q.date || "")}</td>
+      <td>${esc(q.validThrough || "")}</td><td>${sentTo(q)}</td></tr>`).join("")
       : `<tr><td colspan="8" class="hint">${state.quotes.length ? "No quotes match." : "No quotes yet. Start one with New quote."}</td></tr>`;
   }
   $("q-search").addEventListener("input", renderList);
-  $("q-list").addEventListener("click", e => { const tr = e.target.closest("tr[data-n]"); if (tr) location.hash = "#q/" + encodeURIComponent(tr.dataset.n); });
-  $("q-list").addEventListener("keydown", e => { if (e.key === "Enter") { const tr = e.target.closest("tr[data-n]"); if (tr) location.hash = "#q/" + encodeURIComponent(tr.dataset.n); } });
+  const openRow = tr => { location.hash = (tr.dataset.src === "web" ? "#w/" : "#q/") + encodeURIComponent(tr.dataset.n); };
+  $("q-list").addEventListener("click", e => { const tr = e.target.closest("tr[data-n]"); if (tr) openRow(tr); });
+  $("q-list").addEventListener("keydown", e => { if (e.key === "Enter") { const tr = e.target.closest("tr[data-n]"); if (tr) openRow(tr); } });
+
+  // ---------- web estimates (read-only record of what the customer saw, plus internal cost) ----------
+  let web = null;
+  async function showWeb(number) {
+    $("view-web").hidden = false;
+    try { web = (await api("GET", "/webquotes/" + encodeURIComponent(number))).quote; renderWeb(); }
+    catch (e) { banner(e.message); location.hash = "#quotes"; }
+  }
+  function renderWeb() {
+    const r = web, c = r.customer || {}, I = r.internal;
+    $("w-title").textContent = `${r.number} · ${c.company || c.name || ""}`;
+    $("w-sum").textContent = `${r.summary} · ${r.date}, valid through ${r.validThrough}`;
+    $("w-open").href = r.link || "#";
+    $("w-status").value = r.workflow || "new";
+    const d = r.delivery || {};
+    const line = (label, x) => !x ? `<span class="hint">${label}: not recorded (quote made before delivery tracking)</span>`
+      : x.ok ? `<span class="pill ok">${label}: sent</span> <span class="hint">${esc((x.at || "").replace("T", " ").slice(0, 16))} UTC</span>`
+      : `<span class="pill stale">${label}: failed</span> <span class="hint">${esc(x.error || "")}</span>`;
+    $("w-delivery").innerHTML = [line("Email to EZUP", d.ezup), line("OnePageCRM", d.crm), line("Customer copy", d.customer)].map(x => `<div>${x}</div>`).join("");
+    const tbl = (head, rows) => `<div class="table-box"><table><thead><tr>${head.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
+    let h = `<section class="panel stack-sm"><h2>Customer</h2><p>${esc(c.name)}${c.company ? ` · ${esc(c.company)}` : ""}<br><a href="mailto:${esc(c.email)}">${esc(c.email)}</a>${c.phone ? ` · ${esc(c.phone)}` : ""}${r.inputs && r.inputs.zip ? ` · Site ZIP ${esc(r.inputs.zip)}` : ""}</p>${c.notes ? `<p class="small">${esc(c.notes)}</p>` : ""}</section>`;
+    h += `<section class="panel stack-sm"><h2>Price</h2><p>${r.price != null ? `Shown to the customer: <strong>${money(r.price)}</strong>${r.sampleCosts ? ' <span class="pill soon">sample costs</span>' : ""}` : `<strong>No price was shown</strong> <span class="hint">${esc(I ? I.priceWithheld || "" : r.message || "")}</span>`}</p>
+      <p class="small">Building evaluation: ${r.bldgEval ? `requested${r.evalPrice ? ` (${money(r.evalPrice)} of the price)` : ""}` : (r.building && r.building.recommended ? "recommended, not selected. Offer it." : "not selected")}</p>
+      ${I ? `<p class="small">Internal cost ${money(I.cost)} · sell ${money(I.sell)} at ${Math.round(I.margin * 100)}% · freight and travel at about ${esc(I.miles)} mi${I.state ? ` (${esc(I.state)})` : ""}</p>` : ""}</section>`;
+    if (r.scope && r.scope.length) h += `<section class="panel stack-sm"><h2>Scope</h2><ul class="small">${r.scope.map(x => `<li>${esc(x)}</li>`).join("")}</ul></section>`;
+    if (r.members && r.members.length) h += `<section class="panel stack-sm"><h2>Members</h2>${tbl(["Member", "Size", "Qty", "Length", "Weight"], r.members.map(m => `<tr><td>${esc(m.role)}</td><td>${esc(m.size)}</td><td>${m.qty}</td><td>${m.lengthFt ? esc(m.lengthFt + " ft") : ""}</td><td class="n">${num(m.lb)} lb</td></tr>`))}</section>`;
+    if (r.checks && r.checks.length) h += `<section class="panel stack-sm"><h2>Design checks${r.worstRatio != null ? ` <span class="hint">worst ${r.worstRatio}</span>` : ""}</h2>${tbl(["Check", "Value", "Limit", "Ratio", "Detail"], r.checks.map(k => `<tr><td>${esc(k.name)}</td><td>${esc(k.value)}</td><td>${esc(k.limit)}</td><td class="n">${k.ratio}</td><td class="small">${esc(k.detail || "")}</td></tr>`))}</section>`;
+    if (r.buildingLoads && r.buildingLoads.length) h += `<section class="panel stack-sm"><h2>Loads on the building</h2>${tbl(["Load", "Value"], r.buildingLoads.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`))}</section>`;
+    if (I && I.lines) h += `<section class="panel stack-sm"><div class="row between"><h2>Bill of materials and cost</h2><span class="eyebrow">Internal</span></div>${tbl(["Item", "Qty", "Unit", "Unit cost", "Extended"], I.lines.map(l => `<tr><td>${esc(l.label)}</td><td class="n">${num(l.qty)}</td><td>${esc(l.unit)}</td><td class="n">${money2(l.cost)}</td><td class="n">${money(l.ext)}</td></tr>`))}</section>`;
+    const notes = (r.warnings || []).concat(r.assumptions || []);
+    if (notes.length) h += `<section class="panel stack-sm"><h2>Warnings and assumptions</h2><ul class="small">${notes.map(x => `<li>${esc(x)}</li>`).join("")}</ul></section>`;
+    if (r.history && r.history.length) h += `<details class="panel"><summary>History</summary><ul class="small">${r.history.map(x => `<li>${esc((x.at || "").replace("T", " ").slice(0, 16))} ${esc(x.by || "")} ${esc(x.event)}</li>`).join("")}</ul></details>`;
+    $("w-body").innerHTML = h;
+  }
+  $("w-status").addEventListener("change", () => busy(null, async () => {
+    web = (await api("POST", "/webquotes/" + encodeURIComponent(web.number), { action: "status", status: $("w-status").value })).quote; renderWeb(); banner("Status saved.", "ok");
+  }));
+  $("w-email").addEventListener("click", e => busy(e.target, async () => {
+    const out = await api("POST", "/webquotes/" + encodeURIComponent(web.number), { action: "email" });
+    web = out.quote; renderWeb();
+    banner(out.sent ? "Sent. Check your inbox." : `Email failed: ${out.error}`, out.sent ? "ok" : "bad");
+  }));
+  $("w-email-cust").addEventListener("click", e => busy(e.target, async () => {
+    const out = await api("POST", "/webquotes/" + encodeURIComponent(web.number), { action: "email", customer: true });
+    web = out.quote; renderWeb();
+    const cu = web.delivery.customer;
+    banner(cu && cu.ok ? "Customer copy sent." : `Customer copy not sent: ${cu ? cu.error : "unknown"}`, cu && cu.ok ? "ok" : "bad");
+  }));
 
   // ---------- quote editor ----------
   const INPUT_IDS = { cap: "i-cap", power: "i-power", op: "i-op", span: "i-span", runway: "i-runway", height: "i-height", support: "i-support", install: "i-install", miles: "i-miles", margin: "i-margin" };
