@@ -10,7 +10,7 @@ export async function onRequestPost({ request, env }) {
     if (design.status !== "ok") return json({ ok: true, status: design.status, price: null, note: design.message });
     return json({
       ok: true, status: "ok",
-      price: allowed.ok ? { sell: priced.sell, sample: !!allowed.sample } : null,
+      price: allowed.ok ? { sell: priced.sell, crane: priced.craneSell, eval: priced.evalSell || 0, sample: !!allowed.sample } : null,
       note: allowed.ok ? null : PRICE_PENDING,
       freight: { state: priced.state, miles: priced.milesKnown ? priced.miles : null }
     });

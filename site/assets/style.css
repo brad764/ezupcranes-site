@@ -408,6 +408,15 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size
 .cfg-segs label { position: relative; display: inline-flex; }
 .cfg-segs span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); font-weight: 600; }
 .cfg-segs input:checked + span { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.cfg-jib-hint { margin-top: 8px; }
+.cfg-check { position: relative; display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: start; padding: 14px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); cursor: pointer; }
+.cfg-check input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--ink); cursor: pointer; }
+.cfg-check input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.cfg-check strong { display: block; font-weight: 700; }
+.cfg-check small { display: block; margin-top: 4px; color: var(--ink-soft); font-size: 0.92rem; line-height: 1.45; }
+.cfg-check .cfg-rec { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 3px; background: var(--yellow); color: #1C1E21; font-size: 0.78rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; vertical-align: 2px; }
+.cfg-check:has(input:checked) { border-color: var(--ink); box-shadow: inset 4px 0 0 var(--yellow); }
+.qd-loads td:last-child { font-family: var(--mono, ui-monospace, monospace); white-space: nowrap; }
 .cfg-group { display: flex; flex-direction: column; gap: 18px; padding: 18px 0; border-block: 1px solid var(--rule); }
 .cfg-size[hidden] { display: none; }
 .cfg-size-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }

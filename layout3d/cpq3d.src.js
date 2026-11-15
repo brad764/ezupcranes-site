@@ -196,7 +196,46 @@ export function mount(host, opts) {
     return g;
   }
 
+  function buildWallJib(G) {
+    const g = new Group();
+    const R = G.reach * FT, H = G.underBoomIn * IN, bd = G.boom.d * IN, bf = G.boom.bf * IN;
+    const top = G.wallAboveIn * IN + 0.6;
+    // building column (by others): W12-ish, flange facing the jib, plus a slab patch
+    const cd = 0.31, cb = 0.31, ct = 0.016;
+    box(g, ct, top, cb, -ct / 2, top / 2, 0, M.gray);
+    box(g, ct, top, cb, -cd + ct / 2, top / 2, 0, M.gray);
+    box(g, cd - 2 * ct, top, 0.01, -cd / 2, top / 2, 0, M.gray);
+    box(g, 0.6, 0.02, 0.6, -cd / 2, 0.01, 0, M.gray);
+    const brk = (y, w) => { box(g, 0.16, 0.14, w, 0.08, y, 0, M.gray); cyl(g, 0.02, 0.2, 0.16, y, 0, M.black, 'y'); };
+    if (G.style === 'wall') {
+      const hs = G.hingeIn * IN, pb = G.post.B * IN, pl = G.post.hIn * IN;
+      const px = 0.2 + pb / 2;
+      box(g, pb, pl, pb, px, H + pl / 2, 0, M.yellow);
+      brk(H + bd / 2, pb + 0.06); brk(H + bd / 2 + hs, pb + 0.06);
+      ibeamX(g, bd, bf, R - 0.2, (R + 0.2) / 2, H + bd, 0, M.yellow);
+      const k = Math.min(R * 0.3, Math.min(0.9, hs * 0.5));
+      const br = box(g, k * Math.SQRT2, 0.07, 0.07, px + pb / 2 + k / 2, H + bd + k / 2, 0, M.yellow);
+      br.rotation.z = -Math.PI / 4;
+    } else {
+      const a = G.rod.atIn * IN, hr = G.rod.riseIn * IN;
+      const yr = H + bd / 2 + hr;
+      brk(H + bd / 2, bf + 0.06); brk(yr, 0.14);
+      ibeamX(g, bd, bf, R - 0.14, (R + 0.14) / 2, H + bd, 0, M.yellow);
+      const x0 = 0.18, y0 = yr, x1 = a, y1 = H + bd + 0.02;
+      const len = Math.hypot(x1 - x0, y1 - y0);
+      const rod = cyl(g, Math.max(0.011, G.rod.d * IN / 2), len, (x0 + x1) / 2, (y0 + y1) / 2, 0, M.black, 'y');
+      rod.rotation.z = Math.atan2(x1 - x0, y0 - y1);
+      box(g, 0.08, 0.06, bf + 0.03, a, H + bd + 0.03, 0, M.yellow);
+    }
+    box(g, 0.02, bd + 0.02, bf + 0.02, R, H + bd / 2, 0, M.yellow);
+    const xt = R * 0.72;
+    box(g, 0.3, 0.1, bf + 0.08, xt, H - 0.05, 0, M.red);
+    hoist(g, xt, H - 0.1, 0, G.hookIn * IN, 0.8, true);
+    return g;
+  }
+
   function buildJib(G) {
+    if (G.style === 'wall' || G.style === 'rod') return buildWallJib(G);
     const g = new Group();
     const R = G.reach * FT, H = G.underBoomIn * IN, od = G.mast.OD * IN, mh = G.mast.hIn * IN, bd = G.boom.d * IN, bf = G.boom.bf * IN;
     plateAt(g, 0, 0, G.basePlate * IN);

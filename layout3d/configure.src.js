@@ -1,9 +1,9 @@
 // EZUP crane configurator (configure.html). Bundled to site/assets/configure.js.
 // Design and drawing run in the browser on every keystroke; prices come from /api/estimate so
 // costs and margins stay on the server.
-import { design, TYPES, CAP_SHORT, DEFAULTS } from "../lib/craneDesign.js";
+import { design, TYPES, JIB_STYLES, CAP_SHORT, DEFAULTS } from "../lib/craneDesign.js";
 import { draw } from "../lib/craneDraw.js";
-import { DISCLAIMER, TERMS, PRICE_PENDING } from "../lib/quoteText.js";
+import { DISCLAIMER, TERMS, PRICE_PENDING, BUILDING_OFFER } from "../lib/quoteText.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -64,12 +64,26 @@ function setupRange(key, range, value, t) {
 }
 function show(sel, on) { $$(sel).forEach(el => { el.hidden = !on; }); }
 
+const JIB_HINT = {
+  free: "Pillar mast on its own foundation. 360° rotation, place it anywhere on the floor.",
+  wall: "Boom on a hinged post that bolts to a building column. 180° rotation, no foundation, low headroom.",
+  rod: "Boom hung from a tie rod to a building column. 180° rotation, lightest boom, longest reach; needs column height above the boom."
+};
+const JIB_SPAN_HINT = { free: "Mast centre to the end of the boom", wall: "Column face to the end of the boom", rod: "Column face to the end of the boom" };
+
 function applyControls(d) {
-  const t = d.inputs.type, T = TYPES[t];
+  const t = d.inputs.type, T = t === "jib" ? { ...TYPES.jib, ...JIB_STYLES[d.inputs.jib || "free"] } : TYPES[t];
   setupCaps(T, d.inputs.cap);
   setupRange("span", T.span, d.inputs.span, t);
   setupRange("length", T.length, d.inputs.length, t);
   setupRange("height", T.height, d.inputs.height, t);
+  if (t === "jib") $('[data-size="span"] .cfg-hint').textContent = JIB_SPAN_HINT[d.inputs.jib || "free"];
+  show("[data-for-jib]", t === "jib");
+  if (t === "jib") $("#cfg-jib-hint").textContent = JIB_HINT[d.inputs.jib || "free"];
+  const b = d.building || { recommended: false, why: "" };
+  $("#cfg-bldg").checked = d.inputs.bldg === "yes";
+  $("#cfg-bldg-rec").hidden = !b.recommended;
+  $("#cfg-bldg-why").textContent = b.why || "";
   show("[data-for-support]", t === "industrial" || t === "professional" || t === "monorail");
   show("[data-for-mobility]", t === "gantry");
   show("[data-for-cable]", t === "jib" || t === "gantry");
@@ -77,6 +91,7 @@ function applyControls(d) {
   show("[data-for-power]", t !== "professional");
   show("[data-for-120v]", t === "professional");
   const setRadio = (name, v) => $$(`input[name="${name}"]`).forEach(r => { r.checked = r.value === String(v); });
+  setRadio("jib", d.inputs.jib || "free");
   setRadio("support", d.inputs.support);
   setRadio("mobility", d.inputs.mobility || "casters");
   setRadio("cable", d.inputs.cable || "festoon");
@@ -90,7 +105,8 @@ function applyControls(d) {
 function readForm() {
   const fd = new FormData(form);
   const s = {};
-  for (const k of ["type", "cap", "support", "mobility", "cable", "travel", "control", "install"]) if (fd.get(k) != null) s[k] = fd.get(k);
+  for (const k of ["type", "jib", "cap", "support", "mobility", "cable", "travel", "control", "install"]) if (fd.get(k) != null) s[k] = fd.get(k);
+  s.bldg = fd.get("bldg") === "yes" ? "yes" : "no";
   for (const k of ["span", "length", "height"]) {
     const row = $(`[data-size="${k}"]`);
     if (row && !row.hidden) s[k] = $('input[type="number"]', row).value;
@@ -136,6 +152,7 @@ function setPrice(p) {
   if (p.price) {
     el.innerHTML = `<span class="cfg-price-label">Budget estimate</span><span class="cfg-price-num">${money(p.price.sell)}</span>` +
       `<span class="cfg-price-note">${current.inputs.install === "ezup" ? "Includes installation and " : "Includes "}${p.freight && p.freight.state ? `freight to ${esc(p.freight.state)}.` : "estimated freight. Add your site ZIP code for a closer number."}</span>` +
+      (p.price.eval ? `<span class="cfg-price-note">Includes ${money(p.price.eval)} for the building structure evaluation.</span>` : "") +
       (p.price.sample ? `<span class="cfg-sample">Preview: sample costs</span>` : "");
   } else {
     el.innerHTML = `<span class="cfg-price-label">Budget estimate</span><span class="cfg-price-note">${esc(p.note || PRICE_PENDING)}</span>`;
@@ -253,6 +270,7 @@ function renderQuote(q, c, img) {
   const doc = $("#quote-doc");
   const views = draw(d).views;
   const price = q.price ? `<p class="qd-price"><span>Budget estimate</span><strong>${money(q.price.sell)}</strong></p>` +
+      (q.price.eval ? `<p class="qd-small">Includes ${money(q.price.eval)} for the building structure evaluation by EZUP's licensed professional engineer.</p>` : "") +
       (q.price.sample ? `<p class="cfg-sample">Preview: sample costs, not a real price</p>` : "")
     : `<p class="qd-price"><span>Budget estimate</span><em>${esc(q.priceNote || PRICE_PENDING)}</em></p>`;
   doc.innerHTML = `
@@ -279,6 +297,11 @@ function renderQuote(q, c, img) {
   <table><thead><tr><th scope="col">Member</th><th scope="col">Size</th><th scope="col">Qty</th><th scope="col">Length</th></tr></thead>
   <tbody>${d.members.map(m => `<tr><td>${esc(m.role)}</td><td>${esc(m.size)}</td><td>${m.qty}</td><td>${m.lengthFt ? ftIn(m.lengthFt) : ""}</td></tr>`).join("")}</tbody></table>
   <p class="qd-small">Approximate hook height ${ftIn(d.hookFt)}. Rated capacity ${esc(CAP_SHORT[d.inputs.cap])}; design load includes 15% impact.</p></section>
+<section><h3>Engineering services</h3>
+  <p>${esc(q.buildingOffer || BUILDING_OFFER)}</p>
+  <p class="qd-small">${d.inputs.bldg === "yes" ? "<strong>Included in this estimate:</strong> building structure evaluation with a site visit and a letter report stamped by a licensed professional engineer. Any reinforcement it finds necessary is quoted separately." : `${d.building && d.building.recommended ? "<strong>Recommended for this system.</strong> " : ""}${esc(d.building ? d.building.why : "")} Ask us to add the evaluation to your order.`}</p>
+  ${d.buildingLoads && d.buildingLoads.length ? `<table class="qd-loads"><caption class="qd-small">Approximate loads this system puts on your building (with 15% impact)</caption><tbody>${d.buildingLoads.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join("")}</tbody></table>` : ""}
+</section>
 <section><h3>Design basis and assumptions</h3><ul class="qd-small">${d.assumptions.concat(d.warnings).map(a => `<li>${esc(a)}</li>`).join("")}</ul></section>
 <section><h3>Terms</h3><ul class="qd-small">${(q.terms || TERMS).map(t => `<li>${esc(t)}</li>`).join("")}</ul></section>
 <section class="qd-confirm"><p><strong>Confirmed by EZUP sales management</strong> (required before order)</p>

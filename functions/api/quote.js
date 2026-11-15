@@ -4,7 +4,7 @@
 // MAIL_FROM is a verified sending address). EZUP gets an email with the full design checks, bill of
 // materials, cost and margin, and the lead goes to OnePageCRM with an ASAP action to confirm it.
 import { evaluate, json, pricingMode } from "../../lib/webquote.js";
-import { DISCLAIMER, TERMS, PRICE_PENDING } from "../../lib/quoteText.js";
+import { DISCLAIMER, TERMS, PRICE_PENDING, BUILDING_OFFER } from "../../lib/quoteText.js";
 import { sendMail, crmLead, esc } from "../../lib/notify.js";
 import { todayIso, addDays } from "../../lib/cpq.js";
 
@@ -38,7 +38,8 @@ export async function onRequestPost({ request, env }) {
   const record = {
     number, date, validThrough, customer, inputs: design.inputs, summary: design.summary, status: design.status,
     members: design.members, checks: design.checks, scope: design.scope, warnings: design.warnings, assumptions: design.assumptions,
-    price: showPrice ? priced.sell : null, sampleCosts: showPrice ? !!allowed.sample : null,
+    price: showPrice ? priced.sell : null, evalPrice: showPrice ? priced.evalSell || 0 : null, bldgEval: design.inputs.bldg === "yes",
+    building: design.building, buildingLoads: design.buildingLoads, sampleCosts: showPrice ? !!allowed.sample : null,
     internal: priced ? { cost: priced.cost, sell: priced.sell, margin: priced.margin, lines: priced.lines, miles: priced.miles, state: priced.state, priceWithheld: showPrice ? null : allowed.reason } : null,
     pricingMode: pricingMode(env, request), link, createdAt: new Date().toISOString()
   };
@@ -53,6 +54,7 @@ export async function onRequestPost({ request, env }) {
     note: `Web estimate ${number} (ezupcranes.com configurator)\n${design.summary}\n` +
       (showPrice ? `Budget price shown: ${money(priced.sell)}${allowed.sample ? " (SAMPLE costs)" : ""}\n` : "Price not shown to the customer; confirm and send.\n") +
       (priced ? `Internal cost ${money(priced.cost)}, margin ${Math.round(priced.margin * 100)}%\n` : "") +
+      (design.inputs.bldg === "yes" ? `Customer asked for a building structure evaluation${showPrice ? ` (${money(priced.evalSell)} included)` : ""}.\n` : (design.building && design.building.recommended ? "Building evaluation recommended but not selected; offer it.\n" : "")) +
       `Open the configuration: ${link}` + (customer.notes ? `\n\nCustomer notes: ${customer.notes}` : ""),
     action: `Confirm web estimate ${number}: ${design.summary}`
   });
@@ -73,7 +75,8 @@ export async function onRequestPost({ request, env }) {
 
   return json({
     ok: true, number, date, validThrough, status: design.status, summary: design.summary,
-    price: showPrice ? { sell: priced.sell, sample: !!allowed.sample } : null,
+    price: showPrice ? { sell: priced.sell, crane: priced.craneSell, eval: priced.evalSell || 0, sample: !!allowed.sample } : null,
+    buildingOffer: BUILDING_OFFER,
     priceNote: showPrice ? null : (design.status === "ok" ? PRICE_PENDING : design.message),
     freight: priced ? { state: priced.state, miles: priced.milesKnown ? priced.miles : null } : null,
     disclaimer: DISCLAIMER, terms: TERMS, emailed: { ezup: internal.ok || crm.ok, customer: customerMail.ok }
@@ -109,12 +112,14 @@ function internalHtml(r, d, priced, allowed, crm) {
   let h = `<div style="font-family:Arial,sans-serif;font-size:14px;max-width:760px">`;
   h += `<h2 style="margin:0 0 4px">Web estimate ${esc(r.number)}</h2><p style="margin:0 0 12px;color:#555">${esc(d.summary)}</p>`;
   if (r.pricingMode === "preview" || sample) h += `<p style="background:#FFF4CC;padding:8px 10px;margin:0 0 12px"><b>Costs used are SAMPLE values</b> from the price table, not verified costs.</p>`;
+  h += `<p style="margin:0 0 12px"><b>Building evaluation:</b> ${r.bldgEval ? `requested by the customer${r.evalPrice ? ` (${money(r.evalPrice)} of the price)` : ""}` : (r.building && r.building.recommended ? "recommended, not selected. Offer it." : "not selected.")}</p>`;
   h += `<p style="margin:0 0 12px">${r.price != null ? `Budget price shown to the customer: <b>${money(r.price)}</b>` : `<b>No price was shown to the customer.</b> ${esc(priced ? allowed.reason : d.message || "")}`}</p>`;
   h += `<table ${T}>${rows([["Customer", c.name], ["Company", c.company], ["Email", c.email], ["Phone", c.phone], ["Site ZIP", r.inputs.zip], ["Notes", c.notes], ["Configuration", r.link]])}</table>`;
   if (d.status === "ok") {
     h += `<h3>Members</h3><table ${T}>${d.members.map(m => `<tr><td ${td}>${esc(m.role)}</td><td ${td}>${esc(m.size)}</td><td ${td}>${m.qty}</td><td ${td}>${m.lengthFt ? esc(m.lengthFt + " ft") : ""}</td><td ${td}>${m.lb.toLocaleString()} lb</td></tr>`).join("")}</table>`;
     h += `<h3>Design checks (worst ${d.worstRatio})</h3><table ${T}>${d.checks.map(k => `<tr><td ${td}>${esc(k.name)}</td><td ${td}>${esc(k.value)}</td><td ${td}>${esc(k.limit)}</td><td ${td}>${k.ratio}</td><td ${td}>${esc(k.detail || "")}</td></tr>`).join("")}</table>`;
     if (d.reactions) h += `<p>Reactions: ${esc(Object.entries(d.reactions).map(([k, v]) => `${k} ${v}`).join(", "))}</p>`;
+    if (d.buildingLoads && d.buildingLoads.length) h += `<h3>Loads on the building</h3><table ${T}>${rows(d.buildingLoads)}</table>`;
   }
   if (priced) {
     h += `<h3>Bill of materials and cost</h3><table ${T}>${priced.lines.map(l => `<tr><td ${td}>${esc(l.label)}</td><td ${td}>${l.qty} ${esc(l.unit)}</td><td ${td}>${money(l.cost)}</td><td ${td} align="right">${money(l.ext)}</td></tr>`).join("")}`;
@@ -134,7 +139,8 @@ function customerHtml(r, d) {
   h += `<h2 style="margin:0 0 4px">EZUP estimate ${esc(r.number)}</h2><p style="margin:0 0 12px;color:#555">${esc(r.date)} · valid through ${esc(r.validThrough)}</p>`;
   h += `<p style="background:#FFF4CC;padding:10px 12px"><b>${esc(DISCLAIMER)}</b></p>`;
   h += `<p><b>${esc(d.summary)}</b></p><ul>${d.scope.map(s => `<li>${esc(s)}</li>`).join("")}</ul>`;
-  h += r.price != null ? `<p style="font-size:20px">Budget price: <b>${money(r.price)}</b></p>` : `<p>${esc(PRICE_PENDING)}</p>`;
+  h += r.price != null ? `<p style="font-size:20px">Budget price: <b>${money(r.price)}</b>${r.evalPrice ? `<br><span style="font-size:14px">includes ${money(r.evalPrice)} for the building structure evaluation</span>` : ""}</p>` : `<p>${esc(PRICE_PENDING)}</p>`;
+  h += `<p><b>Engineering services.</b> ${esc(BUILDING_OFFER)}${r.bldgEval ? " You asked for this evaluation; it is included in this estimate." : ""}</p>`;
   h += `<p><a href="${esc(r.link)}">Open your configuration, drawing and 3D model</a></p>`;
   h += `<ul style="color:#555;font-size:13px">${TERMS.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
   h += `<p>EZUP Crane Systems · 627 Claypool Hill Mall Road, Cedar Bluff, VA 24609 · (276) 582-1970</p></div>`;
