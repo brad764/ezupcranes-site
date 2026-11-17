@@ -4,7 +4,7 @@
 // MAIL_FROM is a verified sending address). EZUP gets an email with the full design checks, bill of
 // materials, cost and margin, and the lead goes to OnePageCRM with an ASAP action to confirm it.
 import { evaluate, json, pricingMode } from "../../lib/webquote.js";
-import { DISCLAIMER, TERMS, PRICE_PENDING, BUILDING_OFFER } from "../../lib/quoteText.js";
+import { DISCLAIMER, TERMS, PRICE_PENDING, BUILDING_OFFER, APPROVAL_NOTE } from "../../lib/quoteText.js";
 import { crmLead } from "../../lib/notify.js";
 import { saveWeb, emailEzup, emailCustomer, stamp } from "../../lib/webquotes.js";
 import { todayIso, addDays } from "../../lib/cpq.js";
@@ -41,7 +41,7 @@ export async function onRequestPost({ request, env }) {
     members: design.members, checks: design.checks, worstRatio: design.worstRatio ?? null, scope: design.scope, warnings: design.warnings, assumptions: design.assumptions,
     hoist: design.hoist || null, hookFt: design.hookFt ?? null, reactions: design.reactions || null,
     price: showPrice ? priced.sell : null, evalPrice: showPrice ? priced.evalSell || 0 : null, bldgEval: design.inputs.bldg === "yes",
-    building: design.building, buildingLoads: design.buildingLoads, sampleCosts: showPrice ? !!allowed.sample : null,
+    building: design.building, buildingLoads: design.buildingLoads, sampleCosts: showPrice ? !!allowed.sample : null, unverifiedCosts: allowed.unverified || [],
     internal: priced ? { cost: priced.cost, sell: priced.sell, craneSell: priced.craneSell, evalSell: priced.evalSell, margin: priced.margin, lines: priced.lines, miles: priced.miles, state: priced.state, priceWithheld: showPrice ? null : allowed.reason } : null,
     pricingMode: pricingMode(env, request), link, createdAt: new Date().toISOString(), workflow: "new", history: [{ at: new Date().toISOString(), event: "Created on the website" }]
   };
@@ -52,6 +52,7 @@ export async function onRequestPost({ request, env }) {
     ...customer, zip: design.inputs.zip,
     note: `Web estimate ${number} (ezupcranes.com configurator)\n${design.summary}\n` +
       (showPrice ? `Budget price shown: ${money(priced.sell)}${allowed.sample ? " (SAMPLE costs)" : ""}\n` : "Price not shown to the customer; confirm and send.\n") +
+      ((allowed.unverified || []).length ? `Costs not yet verified: ${allowed.unverified.join(", ")}\n` : "") +
       (priced ? `Internal cost ${money(priced.cost)}, margin ${Math.round(priced.margin * 100)}%\n` : "") +
       (design.inputs.bldg === "yes" ? `Customer asked for a building structure evaluation${showPrice ? ` (${money(priced.evalSell)} included)` : ""}.\n` : (design.building && design.building.recommended ? "Building evaluation recommended but not selected; offer it.\n" : "")) +
       `Open in the CPQ: ${origin}/cpq/#w/${number}\nConfiguration: ${link}` + (customer.notes ? `\n\nCustomer notes: ${customer.notes}` : ""),
@@ -72,7 +73,7 @@ export async function onRequestPost({ request, env }) {
     buildingOffer: BUILDING_OFFER,
     priceNote: showPrice ? null : (design.status === "ok" ? PRICE_PENDING : design.message),
     freight: priced ? { state: priced.state, miles: priced.milesKnown ? priced.miles : null } : null,
-    disclaimer: DISCLAIMER, terms: TERMS, emailed: { ezup: internal.ok || crm.ok, customer: customerMail.ok }
+    disclaimer: DISCLAIMER, terms: TERMS, approvalNote: APPROVAL_NOTE, emailed: { ezup: internal.ok || crm.ok, customer: customerMail.ok }
   });
 }
 

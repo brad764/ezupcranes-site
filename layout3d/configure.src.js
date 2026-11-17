@@ -3,7 +3,7 @@
 // costs and margins stay on the server.
 import { design, TYPES, JIB_STYLES, CAP_SHORT, DEFAULTS } from "../lib/craneDesign.js";
 import { draw } from "../lib/craneDraw.js";
-import { DISCLAIMER, TERMS, PRICE_PENDING, BUILDING_OFFER } from "../lib/quoteText.js";
+import { DISCLAIMER, TERMS, PRICE_PENDING, BUILDING_OFFER, APPROVAL_NOTE } from "../lib/quoteText.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -154,6 +154,7 @@ function setPrice(p) {
     el.innerHTML = `<span class="cfg-price-label">Budget estimate</span><span class="cfg-price-num">${money(p.price.sell)}</span>` +
       `<span class="cfg-price-note">${current.inputs.install === "ezup" ? "Includes installation and " : "Includes "}${p.freight && p.freight.state ? `freight to ${esc(p.freight.state)}.` : "estimated freight. Add your site ZIP code for a closer number."}</span>` +
       (p.price.eval ? `<span class="cfg-price-note">Includes ${money(p.price.eval)} for the building structure evaluation.</span>` : "") +
+      `<span class="cfg-approval">${esc(APPROVAL_NOTE)}</span>` +
       (p.price.sample ? `<span class="cfg-sample">Preview: sample costs</span>` : "");
   } else {
     el.innerHTML = `<span class="cfg-price-label">Budget estimate</span><span class="cfg-price-note">${esc(p.note || PRICE_PENDING)}</span>`;
@@ -272,6 +273,7 @@ function renderQuote(q, c, img) {
   const views = draw(d).views;
   const price = q.price ? `<p class="qd-price"><span>Budget estimate</span><strong>${money(q.price.sell)}</strong></p>` +
       (q.price.eval ? `<p class="qd-small">Includes ${money(q.price.eval)} for the building structure evaluation by EZUP's licensed professional engineer.</p>` : "") +
+      `<p class="qd-approval">${esc(q.approvalNote || APPROVAL_NOTE)}</p>` +
       (q.price.sample ? `<p class="cfg-sample">Preview: sample costs, not a real price</p>` : "")
     : `<p class="qd-price"><span>Budget estimate</span><em>${esc(q.priceNote || PRICE_PENDING)}</em></p>`;
   doc.innerHTML = `

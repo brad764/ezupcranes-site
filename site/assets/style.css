@@ -517,3 +517,7 @@ td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size
 @media (min-width: 700px) and (max-width: 999px) { .cfg-drawing { display: grid; overflow: visible; } .cfg-view svg { max-height: 30vh; } .cfg-swipe { display: none; } }
 .cfg-drawing[hidden], .cfg-3d[hidden] { display: none !important; }
 @media print { .quote-doc > section { break-inside: avoid; } }
+
+.cfg-approval { display: block; margin-top: 8px; padding: 8px 10px; border-left: 4px solid var(--yellow); background: var(--surface); font-weight: 700; font-size: 0.95rem; }
+.qd-approval { margin: 10px 0 0; padding: 10px 12px; border: 2px solid var(--ink); font-weight: 700; }
+@media print { .qd-approval { border-color: #000; } }
