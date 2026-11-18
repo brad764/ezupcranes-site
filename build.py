@@ -111,6 +111,25 @@ FOOTER = """<footer class="site-footer"><div class="wrap">
 RENDER = "assets/img/render"
 
 
+_FP = {}
+
+
+def fingerprint(html):
+    """Add ?v=<content hash> to local asset links, so a changed image, stylesheet or script gets a new
+    address and browsers and Cloudflare never serve a stale copy under a reused file name."""
+    import hashlib
+
+    def ver(m):
+        path = m.group(1)
+        f = OUT / path
+        if not f.is_file():
+            return m.group(0)
+        if path not in _FP:
+            _FP[path] = hashlib.sha1(f.read_bytes()).hexdigest()[:10]
+        return f"{path}?v={_FP[path]}"
+    return re.sub(r'(?<![\w/.?])(assets/[\w./-]+\.(?:webp|jpg|jpeg|png|svg|css|js))(?![\w?])', ver, html)
+
+
 def render_img(stem, alt, cls="", sizes="(min-width: 1100px) 380px, (min-width: 700px) 50vw, 100vw", eager=False):
     """<img> for a 4:3 product rendering, with an 800 px and a 1600 px source."""
     c = f' class="{cls}"' if cls else ""
@@ -220,6 +239,7 @@ def build():
             + "<main id=\"main\">\n" + body.strip() + "\n</main>\n"
             + FOOTER.format(foot_links=foot_links)
         )
+        html = fingerprint(html)
         (OUT / page.name).write_text(html, encoding="utf-8")
         print("built", page.name)
     urls = "".join(f"<url><loc>https://ezupcranes.com/{'' if p.name == 'index.html' else p.name}</loc></url>"
