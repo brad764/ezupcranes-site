@@ -631,24 +631,27 @@ def _hinge_bracket(m, z, xp, w=0.30, t=0.04):
 
 
 def jib_wall(m, arrows=False):
+    """Wall cantilever jib: boom at the top of the pivot post, knee brace below, hinges on the column."""
     R, H = 14 * FT, 12 * FT
     d, bf, tf, tw = 12.3 * IN, 6.52 * IN, 0.44 * IN, 0.26 * IN      # W12x30
-    pb, pl, hs = 10 * IN, 60 * IN, 42 * IN                           # HSS10x10 post, hinge spacing
-    _building_bay(m, 6.1)
+    pb, hs, kb = 10 * IN, 42 * IN, 36 * IN                          # HSS10x10 post, hinge spacing, knee run
+    _building_bay(m, H + d + 0.30)                                  # boom tucked under the roof beam
     xp = 0.10 + pb / 2
-    hss('pivot_post', pb, pb, (xp, 0, H), (xp, 0, H + pl), m.yellow)
-    box('post_cap', (pb + 0.02, pb + 0.02, 0.02), (xp, 0, H + pl), m.yellow, anchor='b', bevel=0.002)
-    for z in (H + d / 2, H + d / 2 + hs):
+    z_up, z_lo = H + d / 2, H + d / 2 - hs                          # upper hinge at boom level
+    z_bot, z_top = z_lo - 6 * IN, H + d + 3 * IN
+    hss('pivot_post', pb, pb, (xp, 0, z_bot), (xp, 0, z_top), m.yellow)
+    box('post_cap', (pb + 0.02, pb + 0.02, 0.02), (xp, 0, z_top), m.yellow, anchor='b', bevel=0.002)
+    for z in (z_up, z_lo):
         _hinge_bracket(m, z, xp)
     x0 = xp + pb / 2
     member('boom', P_I(d, bf, tf, tw), (x0, 0, H + d / 2), (R, 0, H + d / 2), m.yellow)
-    k = 0.95
-    hss('brace', 4 * IN, 4 * IN, (x0, 0, H + d + k), (x0 + k, 0, H + d + 0.02), m.yellow)
     for sy in (-1, 1):
-        prism('gusset', [(x0, H), (x0 + 0.42, H + d), (x0, H + d)], 0.012, m.yellow).matrix_world = Matrix.Translation((0, sy * (bf / 2 - 0.006) - 0.006, 0))
+        prism('gusset', [(x0, H + d), (x0 + 0.30, H + d), (x0, H + d - 0.30)], 0.012, m.yellow).matrix_world = Matrix.Translation((0, sy * (bf / 2 - 0.006) - 0.006, 0))
+    hss('knee_brace', 4 * IN, 4 * IN, (x0, 0, z_lo + 0.15), (x0 + kb, 0, H + 0.01), m.yellow)
+    box('brace_plate', (0.16, bf - 0.01, 0.012), (x0 + kb, 0, H - 0.006), m.yellow, bevel=0.002)
     box('boom_endplate', (0.014, bf + 0.02, d + 0.02), (R + 0.007, 0, H + d / 2), m.yellow, bevel=0.002)
     box('boom_stop', (0.02, bf - 0.03, 0.12), (R - 0.12, 0, H), m.yellow, anchor='b', bevel=0.002)
-    _nameplate(m, 'nameplate-2ton.png', (1.55, -tw / 2 - 0.002, H + d / 2), (0, -1, 0), h=0.11)
+    _nameplate(m, 'nameplate-2ton.png', (1.75, -tw / 2 - 0.002, H + d / 2), (0, -1, 0), h=0.11)
     xh = 2.95
     bowl = hoist_on_beam(m, (xh, 0, H), bf, rz=0.0, s=1.0, drop=1.30, motor=True, pendant=1.8)
     c = crate(m, (1.0, 0.8, 0.7))
@@ -658,14 +661,14 @@ def jib_wall(m, arrows=False):
     if arrows:
         red = mat('arrow_red', '#C93A3A', rough=0.4)
         blue = mat('arrow_blue', '#1F4E8C', rough=0.4)
-        for z, sgn, mt in ((H + d / 2 + hs, 1, red), (H + d / 2, -1, blue)):
+        for z, sgn, mt in ((z_up, 1, red), (z_lo, -1, blue)):
             a0, a1 = (0.55 if sgn > 0 else 1.25), (1.25 if sgn > 0 else 0.55)
             y = -0.55
             cyl('arrow_shaft', 0.03, 0.62, ((a0 + a1) / 2 - sgn * 0.05, y, z), mt, axis='x', bevel=0.0)
             cone = cyl('arrow_head', 0.075, 0.16, (a1, y, z), mt, axis='x', bevel=0.0, r2=0.0)
             if sgn < 0:
                 cone.rotation_euler = (0, -math.pi / 2, 0)
-        return dict(az=-58, el=6, lens=60, pts=[(-0.6, -1.2, H - 1.4), (2.0, 0.8, H + pl + 0.5)])
+        return dict(az=-58, el=6, lens=60, pts=[(-0.6, -1.2, z_bot - 0.9), (2.0, 0.8, z_top + 0.6)])
     return dict(az=-62, el=8, lens=70)
 
 
