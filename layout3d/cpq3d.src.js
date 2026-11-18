@@ -208,16 +208,13 @@ export function mount(host, opts) {
     box(g, 0.6, 0.02, 0.6, -cd / 2, 0.01, 0, M.gray);
     const brk = (y, w) => { box(g, 0.16, 0.14, w, 0.08, y, 0, M.gray); cyl(g, 0.02, 0.2, 0.16, y, 0, M.black, 'y'); };
     if (G.style === 'wall') {
-      // boom at the top of the post; knee brace from the lower end of the post up to the boom
+      // boom at the top of the post, bolted full moment end-plate connection (no knee brace)
       const hs = G.hingeIn * IN, pb = G.post.B * IN, pl = G.post.hIn * IN, yb0 = G.post.botIn * IN;
       const px = 0.2 + pb / 2;
       box(g, pb, pl, pb, px, yb0 + pl / 2, 0, M.yellow);
       brk(H + bd / 2, pb + 0.06); brk(H + bd / 2 - hs, pb + 0.06);
-      ibeamX(g, bd, bf, R - 0.2, (R + 0.2) / 2, H + bd, 0, M.yellow);
-      const kb = G.kneeIn * IN, x0 = px + pb / 2, yk = H + bd / 2 - hs + 0.15;
-      const len = Math.hypot(kb, H - yk);
-      const br = box(g, len, 0.09, 0.09, x0 + kb / 2, (yk + H) / 2, 0, M.yellow);
-      br.rotation.z = Math.atan2(H - yk, kb);
+      box(g, 0.025, bd + 0.08, bf + 0.04, px + pb / 2 + 0.0125, H + bd / 2, 0, M.yellow);
+      ibeamX(g, bd, bf, R - px - pb / 2 - 0.025, (R + px + pb / 2 + 0.025) / 2, H + bd, 0, M.yellow);
     } else {
       const a = G.rod.atIn * IN, hr = G.rod.riseIn * IN;
       const yr = H + bd / 2 + hr;

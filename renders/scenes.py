@@ -643,12 +643,14 @@ def jib_wall(m, arrows=False):
     box('post_cap', (pb + 0.02, pb + 0.02, 0.02), (xp, 0, z_top), m.yellow, anchor='b', bevel=0.002)
     for z in (z_up, z_lo):
         _hinge_bracket(m, z, xp)
+    # bolted full moment connection: end plate on the boom, bolted to the face of the post (no knee brace)
     x0 = xp + pb / 2
-    member('boom', P_I(d, bf, tf, tw), (x0, 0, H + d / 2), (R, 0, H + d / 2), m.yellow)
-    for sy in (-1, 1):
-        prism('gusset', [(x0, H + d), (x0 + 0.30, H + d), (x0, H + d - 0.30)], 0.012, m.yellow).matrix_world = Matrix.Translation((0, sy * (bf / 2 - 0.006) - 0.006, 0))
-    hss('knee_brace', 4 * IN, 4 * IN, (x0, 0, z_lo + 0.15), (x0 + kb, 0, H + 0.01), m.yellow)
-    box('brace_plate', (0.16, bf - 0.01, 0.012), (x0 + kb, 0, H - 0.006), m.yellow, bevel=0.002)
+    tp = 1.0 * IN
+    box('moment_plate', (tp, bf + 0.05, d + 0.14), (x0 + tp / 2, 0, H + d / 2), m.yellow, bevel=0.002)
+    for z in (H + d + 0.035, H + d - tf - 0.04, H + tf + 0.04, H - 0.035):
+        for sy in (-1, 1):
+            bolt((x0 + tp, sy * (bf / 2 - 0.035), z), (1, 0, 0), d=0.024, material=m.zinc, stick=0.022)
+    member('boom', P_I(d, bf, tf, tw), (x0 + tp, 0, H + d / 2), (R, 0, H + d / 2), m.yellow)
     box('boom_endplate', (0.014, bf + 0.02, d + 0.02), (R + 0.007, 0, H + d / 2), m.yellow, bevel=0.002)
     box('boom_stop', (0.02, bf - 0.03, 0.12), (R - 0.12, 0, H), m.yellow, anchor='b', bevel=0.002)
     _nameplate(m, 'nameplate-2ton.png', (1.75, -tw / 2 - 0.002, H + d / 2), (0, -1, 0), h=0.11)
